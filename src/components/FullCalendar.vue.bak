@@ -1,0 +1,1850 @@
+<!--Script---------->
+
+<script setup>
+  //imports
+  import FullCalendar from "@fullcalendar/vue3";
+  import dayGridPlugin from "@fullcalendar/daygrid";
+  import timeGridPlugin from "@fullcalendar/timegrid";
+  import interactionPlugin from "@fullcalendar/interaction";
+  import { defineProps } from "vue";
+  import { auth } from "../auth";
+  import { db } from "../firebaseConfig";
+  import { useUserStore } from "../stores/userStore";
+  import {
+    collection,
+    addDoc,
+    deleteDoc,
+    doc,
+    updateDoc,
+    query,
+    where,
+    getDocs,
+  } from "firebase/firestore";
+  import { onMounted, ref, onBeforeUnmount } from "vue";
+  import { computed } from "vue";
+  // Import Vuetify components
+  import { useTheme } from 'vuetify';
+
+  const userStore = useUserStore();
+  const isCreateEventModalVisible = ref(false);
+  const isEditEventModalVisible = ref(false);
+  const selectedHouse = ref(null);
+  const selectedEventId = ref(null);
+  const eventStartDate = ref("");
+  const eventStartTime = ref("");
+  const eventEndDate = ref("");
+  const eventEndTime = ref("");
+  const calendarRef = ref(null);
+  const showHouseDropdown = ref(false);
+  const turndate = ref("");
+  const turncheckintime = ref("");
+  const turncheckouttime = ref(null);
+  const turn = ref(false);
+  const eventnotes = ref("");
+  const isEventNotesFocused = ref(false);
+  const eventcolor = ref("");
+  const selectedEvent = ref(null); //to hold event data for editModal
+  const calendarHeight = ref(window.innerHeight - 20); // Set initial height minus some padding
+  const checkInTimeDialog = ref(false);
+  const checkOutTimeDialog = ref(false);
+  const editCheckInTimeDialog = ref(false);
+  const editCheckOutTimeDialog = ref(false);
+  
+  // Time dropdown state
+  const selectedCheckInHour = ref('12');
+  const selectedCheckInMinute = ref('00');
+  const selectedCheckInPeriod = ref('AM');
+  const selectedCheckOutHour = ref('12');
+  const selectedCheckOutMinute = ref('00');
+  const selectedCheckOutPeriod = ref('PM');
+
+  // Validation functions
+  const validateHourInput = (value, fieldName) => {
+    // Remove non-numeric characters
+    let numericValue = value.replace(/[^0-9]/g, '');
+    
+    // Convert to number and ensure it's between 1-12
+    let num = parseInt(numericValue);
+    if (isNaN(num) || num < 1) {
+      num = 1;
+    } else if (num > 12) {
+      num = 12;
+    }
+    
+    // Update the appropriate field
+    if (fieldName === 'checkIn') {
+      selectedCheckInHour.value = num.toString();
+    } else {
+      selectedCheckOutHour.value = num.toString();
+    }
+  };
+  
+  const validateMinuteInput = (value, fieldName) => {
+    // Remove non-numeric characters
+    let numericValue = value.replace(/[^0-9]/g, '');
+    
+    // Convert to number and ensure it's between 0-59
+    let num = parseInt(numericValue);
+    if (isNaN(num)) {
+      num = 0;
+    } else if (num > 59) {
+      num = 59;
+    }
+    
+    // Format with leading zero if needed
+    let formattedValue = num.toString().padStart(2, '0');
+    
+    // Update the appropriate field
+    if (fieldName === 'checkIn') {
+      selectedCheckInMinute.value = formattedValue;
+    } else {
+      selectedCheckOutMinute.value = formattedValue;
+    }
+  };
+
+  const props = defineProps({
+    userId: { type: String, required: true },
+  });
+
+  const viewOptions = [
+    { title: 'Month', value: 'dayGridMonth' },
+    { title: 'Week', value: 'timeGridWeek' },
+    { title: 'Day', value: 'timeGridDay' }
+  ];
+
+  const currentView = ref('dayGridMonth');
+
+  const changeCalendarView = (view) => {
+    if (calendarRef.value && calendarRef.value.getApi) {
+      calendarRef.value.getApi().changeView(view);
+      currentView.value = view;
+    }
+  };
+
+  const calendarOptions = {
+    plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin],
+    headerToolbar: {
+      left: "", // Remove buttons from left
+      center: "title", // Keep title centered
+      right: "", // Remove buttons from right
+    },
+    initialView: "dayGridMonth",
+    height: calendarHeight.value, // Use dynamic height
+    eventDidMount: (info) => {
+      info.el.style.backgroundColor = info.event.extendedProps.color;
+    },
+    eventClick: (info) => {
+      // Update selectedEvent when clicking
+      selectedEvent.value = info.event;
+      isEditEventModalVisible.value = true;
+    },
+    editable: true,
+    initialEvents: [],
+    selectable: true,
+    selectMirror: true,
+    dayMaxEvents: true,
+    weekends: true,
+    handleDateSelect, // Changed to handleDateSelect
+    eventClick: editEvent,
+    events: fetchEvents,
+    eventResize: handleEventResize,
+    // Add datesSet handler to ensure events are properly refreshed when navigating between months
+    datesSet: (dateInfo) => {
+      // Clear and refetch events when the calendar view changes
+      calendarRef.value.getApi().refetchEvents();
+    },
+  };
+
+  // Handle window resize to update calendar height
+  const handleResize = () => {
+    calendarHeight.value = window.innerHeight - 20; // Subtract padding
+    if (calendarRef.value && calendarRef.value.getApi) {
+      calendarRef.value.getApi().setOption('height', calendarHeight.value);
+    }
+  };
+
+  onMounted(() => {
+    window.addEventListener('resize', handleResize);
+    if (calendarRef.value && calendarRef.value.getApi) {
+      calendarRef.value.getApi().on("select", handleDateSelect);
+    } else {
+      console.error("calendarRef or its API is not available.");
+    }
+    // Initial resize call
+    handleResize();
+  });
+
+  onBeforeUnmount(() => {
+    window.removeEventListener('resize', handleResize);
+  });
+
+  const closeModal = () => {
+    isCreateEventModalVisible.value = false;
+    isEditEventModalVisible.value = false;
+  };
+
+  async function fetchEvents (fetchInfo, successCallback, failureCallback) {
+    try {
+      const q = query(
+        collection(db, "events"),
+        where("userId", "==", auth.currentUser.uid)
+      );
+      const querySnapshot = await getDocs(q);
+      const events = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      successCallback(events);
+    } catch (error) {
+      console.error("Error fetching events:", error);
+      failureCallback(error);
+    }
+  }
+
+  function handleDateSelect (selectInfo) {
+    isCreateEventModalVisible.value = true;
+    const selectedDate = selectInfo.startStr.split("T")[0];
+    eventStartDate.value = selectedDate;
+    eventEndDate.value = selectedDate;
+    selectedHouse.value = null; // Reset selectedHouse when opening modal
+    calendarRef.value.getApi().unselect();
+  }
+
+  async function handleCreateEvent () {
+    if (!selectedHouse.value) {
+      alert("Please select a house.");
+      return;
+    }
+
+    // Create the event object with proper data structure
+    const newEvent = {
+      title: selectedHouse.value.address,
+      start: `${eventStartDate.value}T00:00:00`,
+      end: `${eventEndDate.value}T23:59:59`,
+      allDay: true,
+      userId: auth.currentUser.uid,
+      address: selectedHouse.value.address,
+      contactnumber: selectedHouse.value.contactnumber,
+      extendedProps: {
+        color: selectedHouse.value.color || '#66b8ca', // Use house color or default
+        eventnotes: eventnotes.value || '',
+        turn: turn.value,
+        turndate: turn.value ? turndate.value : null,
+        turncheckintime: turn.value ? turncheckintime.value : null,
+        turncheckouttime: turn.value ? turncheckouttime.value : null,
+      },
+    };
+
+    try {
+      const docRef = await addDoc(collection(db, "events"), newEvent);
+      newEvent.id = docRef.id; // Assign Firebase ID after successful add
+
+      // Refresh the calendar to fetch the newly added event from Firebase
+      calendarRef.value.getApi().refetchEvents();
+      closeModal();
+      resetFormFields();
+    } catch (error) {
+      console.error("Error adding event:", error);
+      alert("Failed to create event. Please try again.");
+    }
+  }
+
+  // Reset form fields after submission or modal close
+  function resetFormFields () {
+    selectedHouse.value = null;
+    eventStartDate.value = "";
+    eventEndDate.value = "";
+    turn.value = false;
+    turndate.value = "";
+    turncheckintime.value = "";
+    turncheckouttime.value = null;
+    eventnotes.value = "";
+  }
+
+  function selectHouse (house) {
+    selectedHouse.value = house;
+    showHouseDropdown.value = false; // Close dropdown after selection
+  }
+
+  // addEvent to Firebase
+  async function addEvent (newEvent) {
+    try {
+      const docRef = await addDoc(collection(db, "events"), newEvent);
+      console.log("Event added with ID:", docRef.id);
+      await updateDoc(doc(db, "events", docRef.id), { id: docRef.id });
+      newEvent.id = docRef.id;
+      return newEvent;
+    } catch (error) {
+      console.error("Error adding event:", error);
+      throw error;
+    }
+  }
+
+  function editEvent (clickInfo) {
+    isEditEventModalVisible.value = true;
+    selectedEventId.value = clickInfo.event.id;
+    selectedEvent.value = clickInfo.event;
+    const event = clickInfo.event;
+
+    // Parse start and end dates correctly
+    const startDate = event.start ? new Date(event.start) : new Date();
+    const endDate = event.end ? new Date(event.end) : new Date(startDate);
+
+    // Format dates for form inputs (YYYY-MM-DD)
+    eventStartDate.value = startDate.toISOString().split('T')[0];
+    eventEndDate.value = endDate.toISOString().split('T')[0];
+
+    // Get turn data from extended properties
+    turn.value = event.extendedProps.turn || false;
+    turndate.value = event.extendedProps.turndate || "";
+    turncheckintime.value = event.extendedProps.turncheckintime || "";
+    turncheckouttime.value = event.extendedProps.turncheckouttime || "";
+    eventnotes.value = event.extendedProps.eventnotes || "";
+
+    // Set selected house
+    const house = userStore.userData.houses.find(h => h.address === event.title);
+    selectedHouse.value = house || null;
+  }
+
+  async function handleEventUpdate () {
+    const eventId = selectedEventId.value;
+
+    // Create comprehensive update object with all fields
+    const updatedEvent = {
+      start: `${eventStartDate.value}T00:00:00`,
+      end: `${eventEndDate.value}T23:59:59`,
+      extendedProps: {
+        eventnotes: eventnotes.value || '',
+        turn: turn.value,
+        turndate: turn.value ? turndate.value : null,
+        turncheckintime: turn.value ? turncheckintime.value : null,
+        turncheckouttime: turn.value ? turncheckouttime.value : null,
+      }
+    };
+
+    try {
+      // Update event in Firebase
+      const eventRef = doc(db, "events", eventId);
+      await updateDoc(eventRef, updatedEvent);
+
+      // Update local calendar display
+      const calendarApi = calendarRef.value.getApi();
+      const event = calendarApi.getEventById(eventId);
+      if (event) {
+        event.setStart(updatedEvent.start);
+        event.setEnd(updatedEvent.end);
+        event.setExtendedProp('eventnotes', updatedEvent.extendedProps.eventnotes);
+        event.setExtendedProp('turn', updatedEvent.extendedProps.turn);
+        event.setExtendedProp('turndate', updatedEvent.extendedProps.turndate);
+        event.setExtendedProp('turncheckintime', updatedEvent.extendedProps.turncheckintime);
+        event.setExtendedProp('turncheckouttime', updatedEvent.extendedProps.turncheckouttime);
+      }
+
+      closeModal();
+      resetFormFields();
+      calendarApi.refetchEvents(); // Refresh to ensure all data is updated correctly
+    } catch (error) {
+      console.error("Error updating event:", error);
+      alert("Failed to update event. Please try again.");
+    }
+  }
+
+  async function updateEventInFirebase (eventId, updatedEvent) {
+    try {
+      const eventRef = doc(db, "events", eventId);
+      await updateDoc(eventRef, updatedEvent);
+      return updatedEvent;
+    } catch (error) {
+      console.error("Error updating event:", error);
+      throw error;
+    }
+  }
+
+  const deleteEvent = async () => {
+    if (confirm("Are you sure you want to delete this event?")) {
+      try {
+        const eventRef = doc(db, "events", selectedEventId.value);
+        await deleteDoc(eventRef);
+        const calendarApi = calendarRef.value.getApi();
+        const event = calendarApi.getEventById(selectedEventId.value);
+        if (event) {
+          event.remove();
+        }
+        closeModal();
+      } catch (error) {
+        console.error("Error deleting event:", error);
+      }
+    }
+  };
+
+  async function handleEventResize (eventResizeInfo) {
+    try {
+      const { id, start, end } = eventResizeInfo.event;
+
+      const updatedEvent = {
+        start: start.toISOString(),
+        end: end ? end.toISOString() : null,
+      };
+
+      const eventRef = doc(db, "events", id);
+      await updateDoc(eventRef, updatedEvent);
+
+      console.log(`Event ${id} resized successfully in Firestore.`);
+    } catch (error) {
+      console.error("Error resizing event in Firestore:", error);
+    }
+  }
+
+  // Add computed property to filter view options
+  const filteredViewOptions = computed(() => {
+    return viewOptions.filter(option => option.value !== currentView.value);
+  });
+
+  // Function to navigate to previous month/week/day
+  const goToPrev = () => {
+    if (calendarRef.value && calendarRef.value.getApi) {
+      calendarRef.value.getApi().prev();
+    }
+  };
+
+  // Function to navigate to next month/week/day
+  const goToNext = () => {
+    if (calendarRef.value && calendarRef.value.getApi) {
+      calendarRef.value.getApi().next();
+    }
+  };
+
+  // Time picker helper functions
+  function getHour(timeString) {
+    if (!timeString) return '12';
+    const match = timeString.match(/(\d+):(\d+)\s*(AM|PM)/i);
+    if (match) {
+      return match[1].replace(/^0+/, ''); // Remove leading zeros
+    }
+    return '12';
+  }
+
+  function getMinute(timeString) {
+    if (!timeString) return '0';
+    const match = timeString.match(/(\d+):(\d+)\s*(AM|PM)/i);
+    if (match) {
+      return match[2].replace(/^0+/, '') || '0'; // Remove leading zeros, convert '00' to '0'
+    }
+    return '0';
+  }
+
+  function getPeriod(timeString) {
+    if (!timeString) return 'AM';
+    const match = timeString.match(/(\d+):(\d+)\s*(AM|PM)/i);
+    if (match) {
+      return match[3].toUpperCase();
+    }
+    return 'AM';
+  }
+
+  function setHour(hour, type) {
+    const timeVal = type === 'checkin' ? turncheckintime.value : turncheckouttime.value;
+    const minute = getMinute(timeVal) || '0';
+    const period = getPeriod(timeVal) || 'AM';
+    
+    // Format with natural numbers
+    const formattedMinute = minute === '0' ? '00' : minute.padStart(2, '0');
+    
+    if (type === 'checkin') {
+      turncheckintime.value = `${hour}:${formattedMinute} ${period}`;
+    } else {
+      turncheckouttime.value = `${hour}:${formattedMinute} ${period}`;
+    }
+  }
+
+  function setMinute(minute, type) {
+    const timeVal = type === 'checkin' ? turncheckintime.value : turncheckouttime.value;
+    const hour = getHour(timeVal) || '12';
+    const period = getPeriod(timeVal) || 'AM';
+    
+    // Format minute with padding only for display
+    const formattedMinute = minute === '0' ? '00' : minute.padStart(2, '0');
+    
+    if (type === 'checkin') {
+      turncheckintime.value = `${hour}:${formattedMinute} ${period}`;
+    } else {
+      turncheckouttime.value = `${hour}:${formattedMinute} ${period}`;
+    }
+  }
+
+  function setPeriod(period, type) {
+    const timeVal = type === 'checkin' ? turncheckintime.value : turncheckouttime.value;
+    const hour = getHour(timeVal) || '12';
+    const minute = getMinute(timeVal) || '00';
+    
+    if (type === 'checkin') {
+      turncheckintime.value = `${hour}:${minute} ${period}`;
+    } else {
+      turncheckouttime.value = `${hour}:${minute} ${period}`;
+    }
+  }
+
+  // Methods to update time values
+  function updateCheckInTime() {
+    turncheckintime.value = `${selectedCheckInHour.value}:${selectedCheckInMinute.value} ${selectedCheckInPeriod.value}`;
+  }
+
+  function updateCheckOutTime() {
+    turncheckouttime.value = `${selectedCheckOutHour.value}:${selectedCheckOutMinute.value} ${selectedCheckOutPeriod.value}`;
+  }
+
+  // Method to set dropdowns when dialogs open
+  function openCheckInDialog() {
+    if (turncheckintime.value) {
+      const match = turncheckintime.value.match(/(\d+):(\d+)\s*(AM|PM)/i);
+      if (match) {
+        selectedCheckInHour.value = match[1].replace(/^0+/, '') || '12';
+        selectedCheckInMinute.value = match[2];
+        selectedCheckInPeriod.value = match[3].toUpperCase();
+      }
+    }
+    checkInTimeDialog.value = true;
+  }
+
+  function openCheckOutDialog() {
+    if (turncheckouttime.value) {
+      const match = turncheckouttime.value.match(/(\d+):(\d+)\s*(AM|PM)/i);
+      if (match) {
+        selectedCheckOutHour.value = match[1].replace(/^0+/, '') || '12';
+        selectedCheckOutMinute.value = match[2];
+        selectedCheckOutPeriod.value = match[3].toUpperCase();
+      }
+    }
+    checkOutTimeDialog.value = true;
+  }
+
+  function openEditCheckInDialog() {
+    if (turncheckintime.value) {
+      const match = turncheckintime.value.match(/(\d+):(\d+)\s*(AM|PM)/i);
+      if (match) {
+        selectedCheckInHour.value = match[1].replace(/^0+/, '') || '12';
+        selectedCheckInMinute.value = match[2];
+        selectedCheckInPeriod.value = match[3].toUpperCase();
+      }
+    }
+    editCheckInTimeDialog.value = true;
+  }
+
+  function openEditCheckOutDialog() {
+    if (turncheckouttime.value) {
+      const match = turncheckouttime.value.match(/(\d+):(\d+)\s*(AM|PM)/i);
+      if (match) {
+        selectedCheckOutHour.value = match[1].replace(/^0+/, '') || '12';
+        selectedCheckOutMinute.value = match[2];
+        selectedCheckOutPeriod.value = match[3].toUpperCase();
+      }
+    }
+    editCheckOutTimeDialog.value = true;
+  }
+</script>
+
+<!--Template-------->
+
+<template>
+  <div class="calendar-container">
+    <!-- Custom navigation controls -->
+    <div class="calendar-navigation">
+      <v-btn icon size="small" class="nav-button" @click="goToPrev">
+        <v-icon>mdi-chevron-left</v-icon>
+      </v-btn>
+      <v-btn icon size="small" class="nav-button" @click="goToNext">
+        <v-icon>mdi-chevron-right</v-icon>
+      </v-btn>
+    </div>
+
+    <!-- Updated view selector with white border -->
+    <div class="calendar-header">
+      <v-menu :close-on-content-click="true" location="bottom">
+        <template v-slot:activator="{ props }">
+          <div class="view-selector-container" v-bind="props">
+            <div class="view-selector-display">
+              {{viewOptions.find(v => v.value === currentView).title}}
+              <v-icon size="small" color="white" class="ms-1">mdi-chevron-down</v-icon>
+            </div>
+          </div>
+        </template>
+        <v-list class="view-selector-menu" density="compact">
+          <v-list-item v-for="option in filteredViewOptions" :key="option.value"
+            @click="changeCalendarView(option.value)">
+            <v-list-item-title>{{ option.title }}</v-list-item-title>
+          </v-list-item>
+        </v-list>
+      </v-menu>
+    </div>
+
+    <FullCalendar class="full-calendar" ref="calendarRef" :options="calendarOptions">
+      <template v-slot:eventContent="arg">
+        <div class="event-content" :style="{ backgroundColor: arg.event.extendedProps.color }">
+          <div class="event-title">{{ arg.event.title }}</div>
+          <div v-if="arg.event.extendedProps.eventnotes" class="event-notes">
+            {{ arg.event.extendedProps.eventnotes }}
+          </div>
+          <div v-if="arg.event.extendedProps.turn" class="event-turn">
+            <v-icon size="small" color="white" class="turn-icon">mdi-refresh</v-icon>
+            <span class="turn-text">
+              {{ arg.event.extendedProps.turndate }}
+              <span v-if="arg.event.extendedProps.turncheckintime">
+                ({{ arg.event.extendedProps.turncheckintime }})
+              </span>
+            </span>
+          </div>
+        </div>
+      </template>
+    </FullCalendar>
+
+    <v-dialog v-model="isCreateEventModalVisible" max-width="450px" content-class="compact-dialog"
+      transition="dialog-fade">
+      <v-card class="modal-card">
+        <v-card-title class="text-h6 py-2 d-flex justify-space-between align-center modal-header-bg">
+          Create New Event
+          <v-btn icon size="x-small" @click="closeModal" color="white" class="close-btn">
+            <v-icon>mdi-close</v-icon>
+          </v-btn>
+        </v-card-title>
+        <v-card-text class="py-2 modal-content-bg">
+          <v-form @submit.prevent="handleCreateEvent" class="compact-form">
+            <v-container class="pa-2">
+              <!-- House selection field with house icon -->
+              <v-row dense>
+                <v-col cols="12" class="form-field-container">
+                  <div class="icon-wrapper">
+                    <i class="fas fa-home field-icon"></i>
+                  </div>
+                  <v-select label="Select a House" :items="userStore.userData.houses" item-title="address"
+                    item-value="houseId" v-model="selectedHouse" return-object density="compact"
+                    class="ml-8"></v-select>
+                </v-col>
+              </v-row>
+
+              <!-- Start and end date fields with clock icons -->
+              <v-row dense>
+                <v-col cols="6" class="form-field-container">
+                  <div class="icon-wrapper">
+                    <i class="fas fa-clock field-icon"></i>
+                  </div>
+                  <v-text-field label="Start Date" type="date" v-model="eventStartDate" required density="compact"
+                    class="ml-8" @click="$refs.startDateInput?.$el.querySelector('input[type=date]').showPicker()"
+                    ref="startDateInput">
+                  </v-text-field>
+                </v-col>
+                <v-col cols="6" class="form-field-container">
+                  <div class="icon-wrapper">
+                    <i class="fas fa-clock field-icon"></i>
+                  </div>
+                  <v-text-field label="End Date" type="date" v-model="eventEndDate" density="compact" class="ml-8"
+                    @click="$refs.endDateInput?.$el.querySelector('input[type=date]').showPicker()" ref="endDateInput">
+                  </v-text-field>
+                </v-col>
+              </v-row>
+
+              <!-- Turn checkbox with clock icon -->
+              <v-row dense>
+                <v-col cols="12" class="form-field-container">
+                  <div class="icon-wrapper">
+                    <i class="fas fa-clock field-icon"></i>
+                  </div>
+                  <v-checkbox label="Add Turn" v-model="turn" density="compact" class="my-0 py-0 ml-8"></v-checkbox>
+                </v-col>
+              </v-row>
+
+              <!-- Create Event Modal Turn Date -->
+              <v-row v-if="turn" dense>
+                <v-col cols="4" class="form-field-container">
+                  <div class="icon-wrapper">
+                    <i class="fas fa-calendar field-icon"></i>
+                  </div>
+                  <v-text-field label="Turn Date" type="date" v-model="turndate" required density="compact"
+                    class="ml-8 turn-date-field" @click="$refs.turnDateInput?.$el.querySelector('input[type=date]').showPicker()"
+                    ref="turnDateInput" hide-details>
+                  </v-text-field>
+                </v-col>
+                <v-col cols="4" class="form-field-container">
+                  <div class="icon-wrapper">
+                    <i class="fas fa-clock field-icon"></i>
+                  </div>
+                  <v-text-field
+                    v-model="turncheckintime"
+                    label="Check-in Time"
+                    readonly
+                    @click="openCheckInDialog"
+                    density="compact"
+                    class="ml-8"
+                    hide-details
+                  ></v-text-field>
+                </v-col>
+                <v-col cols="4" class="form-field-container">
+                  <div class="icon-wrapper">
+                    <i class="fas fa-clock field-icon"></i>
+                  </div>
+                  <v-dialog
+                    v-model="checkOutTimeDialog"
+                    width="400"
+                    content-class="time-picker-dialog"
+                  >
+                    <template>
+                      <v-text-field
+                        v-model="turncheckouttime"
+                        label="Check-out Time"
+                        readonly
+                        @click="openCheckOutDialog"
+                        density="compact"
+                        class="ml-8"
+                        hide-details
+                      ></v-text-field>
+                    </template>
+                    <v-card>
+                      <v-card-title class="text-center pt-3 pb-2">Select Time</v-card-title>
+                      <v-card-text>
+                        <div class="time-picker-container">
+                          <div class="time-display">
+                            <div class="time-value">{{ turncheckouttime || "12:00 AM" }}</div>
+                          </div>
+                          <div class="time-dropdown-labels">
+                            <div class="label-hour">Hour</div>
+                            <div class="label-minute">Minute</div>
+                            <div class="label-period">AM/PM</div>
+                          </div>
+                          <div class="time-dropdowns">
+                            <v-select
+                              v-model="selectedCheckOutHour"
+                              :items="['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12']"
+                              class="time-select hour-select"
+                              hide-details
+                              density="compact"
+                              variant="outlined"
+                              @update:model-value="updateCheckOutTime()"
+                            ></v-select>
+                            <v-select
+                              v-model="selectedCheckOutMinute"
+                              :items="['00', '05', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55']"
+                              class="time-select minute-select"
+                              hide-details
+                              density="compact"
+                              variant="outlined"
+                              @update:model-value="updateCheckOutTime()"
+                            ></v-select>
+                            <v-select
+                              v-model="selectedCheckOutPeriod"
+                              :items="['AM', 'PM']"
+                              class="time-select period-select"
+                              hide-details
+                              density="compact"
+                              variant="outlined"
+                              @update:model-value="updateCheckOutTime()"
+                            ></v-select>
+                          </div>
+                        </div>
+                      </v-card-text>
+                      <v-card-actions>
+                        <v-spacer></v-spacer>
+                        <v-btn 
+                          color="primary" 
+                          text 
+                          @click="checkOutTimeDialog = false"
+                        >
+                          OK
+                        </v-btn>
+                      </v-card-actions>
+                    </v-card>
+                  </v-col>
+                </v-row>
+
+                <!-- Event notes field with note icon -->
+                <v-row dense>
+                  <v-col cols="12" class="form-field-container">
+                    <div class="icon-wrapper">
+                      <i class="fas fa-sticky-note field-icon"></i>
+                    </div>
+                    <v-textarea label="Event Details" v-model="eventnotes" placeholder="Enter event details..."
+                      @focus="isEventNotesFocused = true" @blur="isEventNotesFocused = false" density="compact"
+                      class="ml-8" rows="2"></v-textarea>
+                  </v-col>
+                </v-row>
+              </v-container>
+            </v-form>
+          </v-card-text>
+          <v-card-actions class="py-2 modal-footer-bg">
+            <v-spacer></v-spacer>
+            <v-btn color="primary" text @click="handleCreateEvent" size="small">Create Event</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-card>
+    </v-dialog>
+    <v-dialog v-model="isEditEventModalVisible" max-width="450px" content-class="compact-dialog"
+      transition="dialog-fade">
+      <v-card class="modal-card">
+        <v-card-title class="text-h6 py-2 d-flex justify-space-between align-center modal-header-bg">
+          Edit Event
+          <v-btn icon size="x-small" @click="closeModal" color="white" class="close-btn">
+            <v-icon>mdi-close</v-icon>
+          </v-btn>
+        </v-card-title>
+        <v-card-text class="py-2 modal-content-bg">
+          <v-form @submit.prevent="handleEventUpdate" class="compact-form">
+            <v-container class="pa-2">
+              <!-- House selection with house icon -->
+              <v-row dense>
+                <v-col cols="12" class="form-field-container">
+                  <div class="icon-wrapper">
+                    <i class="fas fa-home field-icon"></i>
+                  </div>
+                  <v-select label="Selected House" :items="userStore.userData.houses" item-title="address"
+                    item-value="houseId" v-model="selectedHouse" return-object density="compact" :disabled="true"
+                    class="ml-8"></v-select>
+                </v-col>
+              </v-row>
+
+              <!-- Start and end date fields with clock icons -->
+              <v-row dense>
+                <v-col cols="6" class="form-field-container">
+                  <div class="icon-wrapper">
+                    <i class="fas fa-clock field-icon"></i>
+                  </div>
+                  <v-text-field label="Start Date" type="date" v-model="eventStartDate" required density="compact"
+                    class="ml-8" @click="$refs.editStartDateInput?.$el.querySelector('input[type=date]').showPicker()"
+                    ref="editStartDateInput">
+                  </v-text-field>
+                </v-col>
+                <v-col cols="6" class="form-field-container">
+                  <div class="icon-wrapper">
+                    <i class="fas fa-clock field-icon"></i>
+                  </div>
+                  <v-text-field label="End Date" type="date" v-model="eventEndDate" density="compact" class="ml-8"
+                    @click="$refs.editEndDateInput?.$el.querySelector('input[type=date]').showPicker()"
+                    ref="editEndDateInput">
+                  </v-text-field>
+                </v-col>
+              </v-row>
+
+              <!-- Turn checkbox with clock icon -->
+              <v-row dense>
+                <v-col cols="12" class="form-field-container">
+                  <div class="icon-wrapper">
+                    <i class="fas fa-clock field-icon"></i>
+                  </div>
+                  <v-checkbox label="Add Turn" v-model="turn" density="compact" class="my-0 py-0 ml-8"></v-checkbox>
+                </v-col>
+              </v-row>
+
+              <!-- Edit Event Modal Turn Date -->
+              <v-row v-if="turn" dense>
+                <v-col cols="4" class="form-field-container">
+                  <div class="icon-wrapper">
+                    <i class="fas fa-calendar field-icon"></i>
+                  </div>
+                  <v-text-field label="Turn Date" type="date" v-model="turndate" required density="compact"
+                    class="ml-8 turn-date-field" @click="$refs.editTurnDateInput?.$el.querySelector('input[type=date]').showPicker()"
+                    ref="editTurnDateInput" hide-details>
+                  </v-text-field>
+                </v-col>
+                <v-col cols="4" class="form-field-container">
+                  <div class="icon-wrapper">
+                    <i class="fas fa-clock field-icon"></i>
+                  </div>
+                  <v-text-field
+                    v-model="turncheckintime"
+                    label="Check-in Time"
+                    readonly
+                    @click="openEditCheckInDialog"
+                    density="compact"
+                    class="ml-8"
+                    hide-details
+                  ></v-text-field>
+                </v-col>
+                <v-col cols="4" class="form-field-container">
+                  <div class="icon-wrapper">
+                    <i class="fas fa-clock field-icon"></i>
+                  </div>
+                  <v-text-field
+                    v-model="turncheckouttime"
+                    label="Check-out Time"
+                    readonly
+                    @click="openEditCheckOutDialog"
+                    density="compact"
+                    class="ml-8"
+                    hide-details
+                  ></v-text-field>
+                </v-col>
+              </v-row>
+
+              <!-- Event notes field with note icon -->
+              <v-row dense>
+                <v-col cols="12" class="form-field-container">
+                  <div class="icon-wrapper">
+                    <i class="fas fa-sticky-note field-icon"></i>
+                  </div>
+                  <v-textarea label="Event Details" v-model="eventnotes" placeholder="Enter event details..."
+                    @focus="isEventNotesFocused = true" @blur="isEventNotesFocused = false" density="compact"
+                    class="ml-8" rows="2"></v-textarea>
+                </v-col>
+              </v-row>
+            </v-container>
+          </v-form>
+        </v-card-text>
+        <v-card-actions class="py-2 modal-footer-bg">
+          <v-btn color="error" text @click="deleteEvent" size="small">Delete Event</v-btn>
+          <v-spacer></v-spacer>
+          <v-btn color="primary" text @click="handleEventUpdate" size="small">Update Event</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+  </div>
+
+  <!-- Time picker dialogs -->
+  <v-dialog
+    v-model="checkInTimeDialog"
+    width="400"
+    content-class="time-picker-dialog"
+  >
+    <v-card>
+      <v-card-title class="text-center pt-3 pb-2">Select Time</v-card-title>
+      <v-card-text>
+        <div class="time-picker-container">
+          <div class="time-display">
+            <div class="time-value">{{ turncheckintime || "12:00 AM" }}</div>
+          </div>
+          <div class="time-dropdown-labels">
+            <div class="label-hour">Hour</div>
+            <div class="label-minute">Minute</div>
+            <div class="label-period">AM/PM</div>
+          </div>
+          <div class="time-dropdowns">
+            <v-select
+              v-model="selectedCheckInHour"
+              :items="['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12']"
+              class="time-select hour-select"
+              hide-details
+              density="compact"
+              variant="outlined"
+              @update:model-value="updateCheckInTime()"
+            ></v-select>
+            <v-select
+              v-model="selectedCheckInMinute"
+              :items="['00', '05', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55']"
+              class="time-select minute-select"
+              hide-details
+              density="compact"
+              variant="outlined"
+              @update:model-value="updateCheckInTime()"
+            ></v-select>
+            <v-select
+              v-model="selectedCheckInPeriod"
+              :items="['AM', 'PM']"
+              class="time-select period-select"
+              hide-details
+              density="compact"
+              variant="outlined"
+              @update:model-value="updateCheckInTime()"
+            ></v-select>
+          </div>
+        </div>
+      </v-card-text>
+      <v-card-actions>
+        <v-spacer></v-spacer>
+        <v-btn 
+          color="primary" 
+          text 
+          @click="checkInTimeDialog = false"
+        >
+          OK
+        </v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
+
+  <v-dialog
+    v-model="checkOutTimeDialog"
+    width="400"
+    content-class="time-picker-dialog"
+  >
+    <v-card>
+      <v-card-title class="text-center pt-3 pb-2">Select Time</v-card-title>
+      <v-card-text>
+        <div class="time-picker-container">
+          <div class="time-display">
+            <div class="time-value">{{ turncheckouttime || "12:00 AM" }}</div>
+          </div>
+          <div class="time-dropdown-labels">
+            <div class="label-hour">Hour</div>
+            <div class="label-minute">Minute</div>
+            <div class="label-period">AM/PM</div>
+          </div>
+          <div class="time-dropdowns">
+            <v-select
+              v-model="selectedCheckOutHour"
+              :items="['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12']"
+              class="time-select hour-select"
+              hide-details
+              density="compact"
+              variant="outlined"
+              @update:model-value="updateCheckOutTime()"
+            ></v-select>
+            <v-select
+              v-model="selectedCheckOutMinute"
+              :items="['00', '05', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55']"
+              class="time-select minute-select"
+              hide-details
+              density="compact"
+              variant="outlined"
+              @update:model-value="updateCheckOutTime()"
+            ></v-select>
+            <v-select
+              v-model="selectedCheckOutPeriod"
+              :items="['AM', 'PM']"
+              class="time-select period-select"
+              hide-details
+              density="compact"
+              variant="outlined"
+              @update:model-value="updateCheckOutTime()"
+            ></v-select>
+          </div>
+        </div>
+      </v-card-text>
+      <v-card-actions>
+        <v-spacer></v-spacer>
+        <v-btn 
+          color="primary" 
+          text 
+          @click="checkOutTimeDialog = false"
+        >
+          OK
+        </v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
+
+  <v-dialog
+    v-model="editCheckInTimeDialog"
+    width="400"
+    content-class="time-picker-dialog"
+  >
+    <v-card>
+      <v-card-title class="text-center pt-3 pb-2">Select Time</v-card-title>
+      <v-card-text>
+        <div class="time-picker-container">
+          <div class="time-display">
+            <div class="time-value">{{ turncheckintime || "12:00 AM" }}</div>
+          </div>
+          <div class="time-dropdown-labels">
+            <div class="label-hour">Hour</div>
+            <div class="label-minute">Minute</div>
+            <div class="label-period">AM/PM</div>
+          </div>
+          <div class="time-dropdowns">
+            <v-select
+              v-model="selectedCheckInHour"
+              :items="['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12']"
+              class="time-select hour-select"
+              hide-details
+              density="compact"
+              variant="outlined"
+              @update:model-value="updateCheckInTime()"
+            ></v-select>
+            <v-select
+              v-model="selectedCheckInMinute"
+              :items="['00', '05', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55']"
+              class="time-select minute-select"
+              hide-details
+              density="compact"
+              variant="outlined"
+              @update:model-value="updateCheckInTime()"
+            ></v-select>
+            <v-select
+              v-model="selectedCheckInPeriod"
+              :items="['AM', 'PM']"
+              class="time-select period-select"
+              hide-details
+              density="compact"
+              variant="outlined"
+              @update:model-value="updateCheckInTime()"
+            ></v-select>
+          </div>
+        </div>
+      </v-card-text>
+      <v-card-actions>
+        <v-spacer></v-spacer>
+        <v-btn 
+          color="primary" 
+          text 
+          @click="editCheckInTimeDialog = false"
+        >
+          OK
+        </v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
+
+  <v-dialog
+    v-model="editCheckOutTimeDialog"
+    width="400"
+    content-class="time-picker-dialog"
+  >
+    <v-card>
+      <v-card-title class="text-center pt-3 pb-2">Select Time</v-card-title>
+      <v-card-text>
+        <div class="time-picker-container">
+          <div class="time-display">
+            <div class="time-value">{{ turncheckouttime || "12:00 AM" }}</div>
+          </div>
+          <div class="time-dropdown-labels">
+            <div class="label-hour">Hour</div>
+            <div class="label-minute">Minute</div>
+            <div class="label-period">AM/PM</div>
+          </div>
+          <div class="time-dropdowns">
+            <v-select
+              v-model="selectedCheckOutHour"
+              :items="['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12']"
+              class="time-select hour-select"
+              hide-details
+              density="compact"
+              variant="outlined"
+              @update:model-value="updateCheckOutTime()"
+            ></v-select>
+            <v-select
+              v-model="selectedCheckOutMinute"
+              :items="['00', '05', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55']"
+              class="time-select minute-select"
+              hide-details
+              density="compact"
+              variant="outlined"
+              @update:model-value="updateCheckOutTime()"
+            ></v-select>
+            <v-select
+              v-model="selectedCheckOutPeriod"
+              :items="['AM', 'PM']"
+              class="time-select period-select"
+              hide-details
+              density="compact"
+              variant="outlined"
+              @update:model-value="updateCheckOutTime()"
+            ></v-select>
+          </div>
+        </div>
+      </v-card-text>
+      <v-card-actions>
+        <v-spacer></v-spacer>
+        <v-btn 
+          color="primary" 
+          text 
+          @click="editCheckOutTimeDialog = false"
+        >
+          OK
+        </v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
+</template>
+
+<!--Style----------->
+
+<style scoped>
+  .calendar-container {
+    width: 100%;
+    height: 100vh;
+    /* Use viewport height */
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    /* Prevent scrollbars */
+  }
+
+  .calendar-header {
+    position: absolute;
+    top: 8px;
+    right: 24px;
+    z-index: 10;
+  }
+
+  .view-selector {
+    background-color: #5e91c1;
+    border-radius: 4px;
+  }
+
+  .view-selector :deep(.v-field__append-inner) {
+    color: white !important;
+  }
+
+  .view-selector :deep(.v-field__input) {
+    color: white !important;
+    font-weight: 500;
+  }
+
+  .view-selector :deep(.v-field) {
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+
+  :deep(.view-select-menu .v-list-item--active) {
+    background-color: rgba(94, 145, 193, 0.2);
+  }
+
+  .full-calendar {
+    flex: 1;
+    /* Take all available space */
+    width: 100%;
+    max-width: none !important;
+    /* Override any max-width constraints */
+  }
+
+  /* Make the calendar fill the container with rounded corners */
+  :deep(.fc) {
+    height: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    width: 100% !important;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    background-color: white !important;
+    /* Make calendar background white */
+  }
+
+  /* Style the day numbers to be centered, black and smaller */
+  :deep(.fc-daygrid-day-number) {
+    width: 100%;
+    text-align: center;
+    font-size: 0.9rem !important;
+    color: black !important;
+    padding-top: 5px;
+    font-weight: 500;
+  }
+
+  /* Center the day numbers in the header */
+  :deep(.fc-daygrid-day-top) {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 2px;
+  }
+
+  /* Ensure day cells have proper styling */
+  :deep(.fc-daygrid-day) {
+    background-color: white;
+  }
+
+  /* Style the header toolbar with centered title and adjusted navigation */
+  :deep(.fc .fc-toolbar.fc-header-toolbar) {
+    margin-bottom: 1em;
+    background-color: #5e91c1;
+    color: white;
+    padding: 8px;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+    display: flex;
+    justify-content: center;
+    position: relative;
+  }
+
+  /* Center the title text */
+  :deep(.fc-toolbar-title) {
+    font-size: 1.5rem;
+    font-weight: 500;
+    text-align: center;
+    color: white;
+    width: 100%;
+    position: relative;
+    left: 0;
+  }
+
+  /* Move navigation buttons to the left and make them smaller */
+  :deep(.fc-toolbar-chunk:first-child) {
+    margin-left: 10px;
+    display: flex;
+    gap: 5px;
+  }
+
+  /* Style navigation buttons to be smaller */
+  :deep(.fc-prev-button),
+  :deep(.fc-next-button) {
+    background-color: rgba(255, 255, 255, 0.2) !important;
+    border: none !important;
+    width: 28px !important;
+    height: 28px !important;
+    padding: 0 !important;
+  }
+
+  :deep(.fc-prev-button .fc-icon),
+  :deep(.fc-next-button .fc-icon) {
+    font-size: 0.9em !important;
+  }
+
+  :deep(.fc-prev-button:hover),
+  :deep(.fc-next-button:hover) {
+    background-color: rgba(255, 255, 255, 0.3) !important;
+  }
+
+  /* Style the bottom of the calendar to ensure rounded corners */
+  :deep(.fc-view-harness) {
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
+    overflow: hidden;
+  }
+
+  /* Keep the existing button styling */
+  :deep(.fc .fc-button-primary) {
+    background-color: #66b8ca;
+    color: var(--fc-button-text-color);
+  }
+
+  :deep(.fc .fc-button) {
+    background-color: #5e91c1;
+    border: 1px solid transparent;
+    border-radius: 0.25em;
+    font-size: 1em;
+    font-weight: 400;
+    line-height: 1.5;
+    padding: 0.4em 0.65em;
+  }
+
+  /* Event styling */
+  :deep(.fc-daygrid-event) {
+    border-radius: 5px;
+    font-size: var(--fc-small-font-size);
+    position: relative;
+    white-space: nowrap;
+  }
+
+  /* Style today's date differently */
+  :deep(.fc-day-today) {
+    background-color: rgba(234, 249, 252, 0.3) !important;
+  }
+
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+
+  .modal-content {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 400px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  }
+
+  .modal-content h4 {
+    margin-bottom: 20px;
+  }
+
+  .modal-content label {
+    display: block;
+    margin-bottom: 10px;
+  }
+
+  .modal-content input,
+  .modal-content textarea {
+    width: 100%;
+    padding: 8px;
+    margin-top: 4px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+
+  .modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 20px;
+  }
+
+  .modal-actions button {
+    padding: 8px 16px;
+    margin-left: 10px;
+  }
+
+  .demo-app {
+    display: flex;
+    max-height: 100%;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 14px;
+    border-color: aquamarine;
+  }
+
+  .demo-app-main {
+
+    flex-grow: 1;
+    padding: 1em;
+  }
+
+  .fc {
+    /* the calendar root */
+
+    max-width: 1400px;
+    margin: 0;
+    --fc-button-active-bg-color: #60a2df;
+    background-color: #eaf9fc;
+  }
+
+  .fc .fc-button-primary {
+    background-color: #66b8ca;
+    color: var(--fc-button-text-color);
+  }
+
+  .fc .fc-button {
+    background-color: #5e91c1;
+    border: 1px solid transparent;
+    border-radius: 0.25em;
+    font-size: 1em;
+    font-weight: 400;
+    line-height: 1.5;
+    padding: 0.4em 0.65em;
+  }
+
+  .fc .fc-toolbar.fc-header-toolbar {
+    margin-bottom: 1.5em;
+    background-color: #5e91c1;
+    color: #eaf9fc;
+  }
+
+  .fc-daygrid-event {
+    background-color: #66b8ca !important;
+    border-radius: 5px;
+    font-size: var(--fc-small-font-size);
+    position: relative;
+    white-space: nowrap;
+  }
+
+  .external-event {
+    height: 30px;
+    background-color: #ffeb3b;
+    border: 1px solid #ffc107;
+    color: black;
+    padding: 5px;
+    cursor: pointer;
+  }
+
+  ;
+
+  .house-selection {
+    position: relative;
+    border: 1px solid #ccc;
+    padding: 10px;
+    cursor: pointer;
+    background: rgb(159, 4, 4);
+    background-color: #60a2df;
+  }
+
+  .house-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background: rgb(116, 17, 17);
+    border: 1px solid #ccc;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+  }
+
+  .house-option {
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+  }
+
+  .house-option:hover {
+    background-color: #f5f5f5;
+  }
+
+  /* Compact dialog styles */
+  .compact-dialog .v-card {
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  .compact-form .v-input {
+    margin-bottom: 4px;
+  }
+
+  .compact-form .v-text-field__details,
+  .compact-form .v-messages {
+    min-height: 12px;
+  }
+
+  .compact-form .v-input--checkbox {
+    margin-top: 0;
+    padding-top: 0;
+  }
+
+  .date-time-inputs {
+    display: flex;
+    gap: 10px;
+    /* Adjust as needed */
+  }
+
+  .house-container {
+    position: relative;
+    width: 200px;
+  }
+
+  .house-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background: white;
+    border: 1px solid #ddd;
+    z-index: 1000;
+  }
+
+  .house-item {
+    padding: 8px;
+    cursor: pointer;
+  }
+
+  .house-item:hover {
+    background: #f0f0f0;
+  }
+
+  /* Close button styling */
+  .close-btn {
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Modal styling with light blue/grey theme */
+  .modal-card {
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  .modal-header-bg {
+    background-color: #e6eef5;
+    border-bottom: 1px solid #d1dde9;
+  }
+
+  .modal-content-bg {
+    background-color: #f5f9fc;
+  }
+
+  .modal-footer-bg {
+    background-color: #e6eef5;
+    border-top: 1px solid #d1dde9;
+  }
+
+  /* Dialog transition for smoother animation */
+  .dialog-fade-enter-active,
+  .dialog-fade-leave-active {
+    transition: opacity 0.3s ease, transform 0.3s ease;
+  }
+
+  .dialog-fade-enter-from,
+  .dialog-fade-leave-to {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+
+  /* Smoother dropdown animations */
+  :deep(.v-field__menu-parent) {
+    transition: max-height 0.3s ease, opacity 0.3s ease;
+  }
+
+  :deep(.v-list) {
+    transition: max-height 0.3s ease, opacity 0.3s ease;
+  }
+
+  /* Event styling improvements */
+  .event-content {
+    padding: 2px 4px;
+    border-radius: 4px;
+    overflow: hidden;
+    width: 100%;
+  }
+
+  .event-title {
+    font-weight: bold;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .event-notes {
+    font-style: italic;
+    font-size: 0.85em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    opacity: 0.9;
+  }
+
+  .event-turn {
+    display: flex;
+    align-items: center;
+    font-size: 0.8em;
+    margin-top: 2px;
+    background-color: rgba(0, 0, 0, 0.15);
+    border-radius: 3px;
+    padding: 1px 3px;
+  }
+
+  .turn-icon {
+    margin-right: 3px;
+  }
+
+  .turn-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Custom view selector with white border */
+  .view-selector-container {
+    border: 2px solid white;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+
+  .view-selector-display {
+    background-color: #5e91c1;
+    color: white;
+    padding: 6px 12px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 100px;
+  }
+
+  .view-selector-menu {
+    background-color: white;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  }
+
+  /* Move navigation away from sidebar */
+  .calendar-navigation {
+    position: absolute;
+    top: 8px;
+    left: 70px;
+    /* Moved away from sidebar toggle button */
+    z-index: 10;
+    display: flex;
+    gap: 8px;
+  }
+
+  .nav-button {
+    background-color: rgba(255, 255, 255, 0.2) !important;
+    color: white !important;
+    border: 1px solid rgba(255, 255, 255, 0.5) !important;
+  }
+
+  .nav-button:hover {
+    background-color: rgba(255, 255, 255, 0.3) !important;
+  }
+
+  /* Hide the default navigation buttons */
+  :deep(.fc-toolbar-chunk:first-child),
+  :deep(.fc-prev-button),
+  :deep(.fc-next-button) {
+    display: none;
+  }
+
+  /* Remove selector styles that will be replaced by the custom ones */
+  .view-selector {
+    display: none;
+  }
+
+  /* Add consistent icon styling */
+  :deep(.v-field__prepend-inner) {
+    align-self: flex-start;
+    margin-top: 10px;
+  }
+
+  /* Adjust checkbox icon position */
+  .compact-form :deep(.v-checkbox .v-selection-control) {
+    margin-left: -8px;
+  }
+
+  .compact-form :deep(.v-checkbox .v-selection-control__prepend) {
+    margin-right: 4px;
+  }
+
+  /* Icon styling for form fields */
+  .form-field-container {
+    position: relative;
+  }
+
+  .icon-wrapper {
+    position: absolute;
+    top: 10px;
+    left: 12px;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+  }
+
+  .field-icon {
+    color: #5e91c1;
+    font-size: 16px;
+  }
+
+  /* Override Vuetify's default styling */
+  .compact-form :deep(.v-input__prepend) {
+    display: none !important;
+  }
+
+  /* Style for turn date field */
+  .turn-date-field :deep(input[type="date"]) {
+    cursor: pointer;
+  }
+
+  /* Style for turn time fields */
+  .turn-time-field :deep(input[type="time"]) {
+    cursor: pointer;
+  }
+
+  /* Style for time picker fields */
+  .time-picker-field {
+    cursor: pointer;
+  }
+
+  /* Time picker styles */
+  .time-picker-container {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+  }
+
+  .time-display {
+    background-color: #5e91c1;
+    color: white;
+    padding: 16px 15px;
+    text-align: center;
+    transition: background-color 0.3s ease;
+  }
+
+  .time-value {
+    font-size: 1.75rem;
+    font-weight: 500;
+    margin-top: 5px;
+    transition: all 0.2s ease;
+  }
+
+  .time-dropdowns {
+    display: flex;
+    padding: 20px;
+    gap: 12px;
+    align-items: stretch;
+    justify-content: space-between;
+  }
+
+  .time-select {
+    transition: all 0.3s ease;
+  }
+
+  .time-select:focus-within {
+    transform: scale(1.05);
+    box-shadow: 0 2px 8px rgba(94, 145, 193, 0.2);
+  }
+  
+  /* Update the hour-select, minute-select, and period-select classes */
+  .hour-select, 
+  .minute-select {
+    min-width: 85px !important;
+    flex: 3;
+    text-align: center;
+  }
+  
+  .period-select {
+    min-width: 80px !important;
+    flex: 2;
+  }
+  
+  /* Make the input text centered */
+  .time-select input {
+    text-align: center !important;
+    font-size: 1.1rem;
+  }
+
+  .time-picker-dialog {
+    min-width: 400px !important;
+  }
+
+  .time-dropdown-labels {
+    display: flex;
+    justify-content: space-between;
+    padding: 0 20px;
+    margin-top: 10px;
+    margin-bottom: -10px;
+  }
+
+  .label-hour {
+    flex: 3;
+    text-align: center;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #5e91c1;
+    min-width: 85px;
+  }
+
+  .label-minute {
+    flex: 3;
+    text-align: center;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #5e91c1;
+    min-width: 85px;
+  }
+
+  .label-period {
+    flex: 2;
+    text-align: center;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #5e91c1;
+    min-width: 80px;
+  }
+
+  /* Add back important styles */
+  .time-select :deep(.v-field__outline) {
+    color: #5e91c1;
+  }
+
+  .time-select :deep(.v-field--focused) {
+    border-color: #5e91c1;
+  }
+
+  .time-select :deep(.v-field--active) {
+    border-color: #5e91c1;
+  }
+
+  /* Override styles for v-select items for better AM/PM display */
+  :deep(.v-select-list .v-list-item--active) {
+    background-color: rgba(94, 145, 193, 0.2) !important;
+  }
+
+  :deep(.v-select-list .v-list-item__content) {
+    text-align: center;
+  }
+
+  /* Additional styling for v-select items */
+  :deep(.v-select .v-field__input) {
+    text-align: center !important;
+    font-size: 1.1rem;
+    padding-left: 0;
+    padding-right: 0;
+  }
+  
+  :deep(.v-select .v-select__selection) {
+    width: 100%;
+    text-align: center;
+  }
+</style>

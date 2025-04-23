@@ -1,0 +1,67 @@
+//PROJECT SETTINGS
+{
+  "editor.inlineSuggest.showToolbar": "always",
+  "editor.inlineSuggest.suppressSuggestions": false,
+  "editor.stickyScroll.enabled": false,
+  "editor.suggest.showSnippets": true,
+  "editor.tabCompletion": "on",
+  "editor.inlineSuggest.enabled": true,
+  "files.autoSave": "afterDelay",
+  "files.autoSaveDelay": 1000,
+  "scm.diffDecorationsGutterVisibility": "none",
+  "workbench.editor.enablePreview": true,
+  "workbench.editor.closeOnFileDelete": true,
+  "workbench.editor.enablePreviewFromCodeNavigation": true,
+  "workbench.editor.enablePreviewFromQuickOpen": true,
+  "workbench.editor.highlightModifiedTabs": true,
+  "workbench.iconTheme": "material-icon-theme",
+  "workbench.settings.openDefaultSettings": true,
+  "workbench.settings.enableNaturalLanguageSearch": true,
+  "workbench.editorAssociations": {
+    "*.svg": "imagePreview.previewEditor"
+  },
+  "[vue]": {
+    "editor.defaultFormatter": "Vue.volar"
+  },
+  "vsintellicode.modify.editor.suggestSelection": "enabled",
+  "breadcrumbs.enabled": false,
+  "less.completion.triggerPropertyValueCompletion": false,
+  "debug.javascript.debugByLinkOptions": "on",
+  "volar.useWorkspaceTsdk": true,
+  "typescript.preferences.importModuleSpecifier": "relative",
+  "typescript.updateImportsOnFileMove.enabled": "always",
+  "path-intellisense.showOnAbsoluteSlash": true,
+  "terminal.integrated.defaultProfile.windows": "Command Prompt",
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "diffEditor.hideUnchangedRegions.contextLineCount": 1,
+  "diffEditor.hideUnchangedRegions.minimumLineCount": 1,
+  "git.showInlineOpenFileAction": false,
+  "git.decorations.enabled": false,
+  "diffEditor.experimental.showEmptyDecorations": false,
+  "scm.diffDecorationsGutterAction": "none",
+  "scm.diffDecorations": "none",
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+  "files.associations": {
+    "*.vue": "vue"
+  },
+  "emmet.includeLanguages": {
+    "vue": "html"
+  },
+  "javascript.suggest.autoImports": true,
+  "typescript.suggest.autoImports": false,
+  "editor.quickSuggestions": {
+    "strings": true
+  },
+  "editor.suggestSelection": "first",
+  "editor.wordBasedSuggestions": "matchingDocuments",
+  "editor.parameterHints.enabled": true,
+  "editor.snippetSuggestions": "inline",
+  "editor.acceptSuggestionOnEnter": "on",
+  "editor.acceptSuggestionOnCommitCharacter": true,
+  "volar.takeOverMode.enabled": false
+}

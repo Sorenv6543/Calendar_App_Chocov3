@@ -1,0 +1,13 @@
+
+{
+  "mcpServers": {
+    "firebase": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-firebase", "start"],
+      "env": {
+        "FIREBASE_KEY": "C:/Users/Soren/Desktop/Sites/CleanBooking-light_v2/empmanager-846a6-firebase-adminsdk-krphu-8d8bd6bcba.json",
+        "FIREBASE_PROJECT_ID": "empmanager-846a6"
+      }
+    }
+  }
+}
