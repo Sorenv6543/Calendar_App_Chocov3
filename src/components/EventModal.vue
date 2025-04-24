@@ -1,5 +1,6 @@
 <template>
-  <v-dialog v-model="dialog" max-width="450px" content-class="event-modal-dialog" width="100%" :persistent="false">
+  <v-dialog v-model="dialog" max-width="450px" content-class="event-modal-dialog" width="100%" :persistent="false"
+    transition="fade-transition" origin="center center">
     <v-card class="event-modal-card">
       <div class="modal-glass-effect"></div>
 
@@ -13,19 +14,22 @@
             <span class="ml-2 input-label">House</span>
           </div>
           <div class="custom-select-container">
-            <div class="custom-select-header" @click="toggleHouseDropdown">
+            <div class="custom-select-header" @click.stop="toggleHouseDropdown"
+              :class="{ 'disabled': props.event, 'active': !props.event }">
               <div class="selected-house-display">
                 <div v-if="selectedHouse" class="d-flex align-center">
                   <div class="rounded-circle me-2" :style="`background-color: ${selectedHouse.color || '#2979ff'
                     }; width: 16px; height: 16px;`"></div>
                   <span>{{ selectedHouse.address }}</span>
                 </div>
-                <span v-else class="placeholder-text">Select a house</span>
+                <span v-else class="placeholder-text">{{ props.event ? "No house associated" : "Click to select a house"
+                  }}</span>
               </div>
-              <v-icon>mdi-chevron-down</v-icon>
+              <v-icon v-if="!props.event" color="primary">mdi-chevron-down</v-icon>
             </div>
             <div v-if="showHouseDropdown" class="custom-select-dropdown">
-              <div v-for="house in uniqueHouses" :key="house.houseId" class="house-option" @click="selectHouse(house)">
+              <div v-for="house in uniqueHouses" :key="house.houseId" class="house-option"
+                @click.stop="selectHouse(house)">
                 <div class="d-flex align-center">
                   <div class="rounded-circle me-2" :style="`background-color: ${house.color || '#2979ff'
                     }; width: 16px; height: 16px;`"></div>
@@ -37,79 +41,102 @@
         </div>
 
         <!-- Date Range -->
-
         <div class="date-range-container">
           <div class="input-group">
             <div class="d-flex align-center mb-1">
-              <v-icon color="primary" size="20">mdi-calendar-start</v-icon>
-
-              <span class="ml-2 input-label">Start Date</span>
+              
+              <span class="ml-2 input-label text-medium-emphasis"  >Check-In</span>
             </div>
 
-            <v-text-field v-model="eventStartDate" type="date" variant="outlined" density="comfortable"
-              class="glass-input" hide-details></v-text-field>
+            <v-menu v-model="startDateMenu" :close-on-content-click="false" :nudge-right="40"
+              transition="scale-transition" min-width="auto">
+              <template v-slot:activator="{ props }">
+                <v-text-field v-model="formattedStartDate" readonly variant="outlined" density="comfortable"
+                  class="glass-input date-field" hide-details prepend-inner-icon="mdi-calendar-outline"
+                  v-bind="props"></v-text-field>
+              </template>
+              <v-date-picker v-model="eventStartDate" @update:model-value="startDateMenu = false"
+                color="primary"></v-date-picker>
+            </v-menu>
           </div>
 
           <div class="input-group">
             <div class="d-flex align-center mb-1">
-              <v-icon color="primary" size="20">mdi-calendar-end</v-icon>
-
-              <span class="ml-2 input-label">End Date</span>
+             
+              <span class="ml-2 input-label">Check-Out</span>
             </div>
 
-            <v-text-field v-model="eventEndDate" type="date" variant="outlined" density="comfortable"
-              class="glass-input" hide-details></v-text-field>
+            <v-menu v-model="endDateMenu" :close-on-content-click="false" :nudge-right="40"
+              transition="scale-transition" min-width="auto">
+              <template v-slot:activator="{ props }">
+                <v-text-field v-model="formattedEndDate" readonly variant="outlined" density="comfortable"
+                  class="glass-input date-field" hide-details prepend-inner-icon="mdi-calendar-outline"
+                  v-bind="props"></v-text-field>
+              </template>
+              <v-date-picker v-model="eventEndDate" @update:model-value="endDateMenu = false" color="primary"
+                :min="eventStartDate"></v-date-picker>
+            </v-menu>
           </div>
         </div>
 
         <!-- Turn Section -->
-
         <div class="input-group turn-section">
-          <v-checkbox v-model="turn" label="Add Turn" color="primary" hide-details
-            @update:model-value="handleTurnChange"></v-checkbox>
+          <div class="d-flex align-center justify-space-between mb-2">
+            <div class="d-flex align-center">
+              <v-icon color="primary" size="20">mdi-clock-outline</v-icon>
+              <span class="ml-2 input-label">Turn</span>
+            </div>
+            <v-switch v-model="turn" color="primary" hide-details density="compact"
+              @update:model-value="handleTurnChange" class="ma-0 pa-0"></v-switch>
+          </div>
 
-          <div v-if="turn" class="turn-details mt-3">
+          <div v-if="turn" class="turn-details mt-2">
             <div class="d-flex align-center mb-1">
-              <v-icon color="primary" size="20">mdi-calendar-refresh</v-icon>
-
+          
               <span class="ml-2 input-label">Turn Date</span>
             </div>
 
-            <v-text-field v-model="turndate" type="date" variant="outlined" density="comfortable"
-              class="glass-input mb-3" hide-details :min="eventStartDate" :max="eventEndDate"></v-text-field>
+            <v-menu v-model="turnDateMenu" :close-on-content-click="false" :nudge-right="40"
+              transition="scale-transition" min-width="auto">
+              <template v-slot:activator="{ props }">
+                <v-text-field v-model="formattedTurnDate" readonly variant="outlined" density="comfortable"
+                  class="glass-input date-field mb-2" hide-details prepend-inner-icon="mdi-calendar-outline"
+                  placeholder="Select turn date" v-bind="props"></v-text-field>
+              </template>
+              <v-date-picker v-model="turndate" @update:model-value="turnDateMenu = false" color="primary"
+                :min="eventStartDate" :max="eventEndDate"></v-date-picker>
+            </v-menu>
 
             <div class="date-range-container">
               <div class="input-group">
                 <div class="d-flex align-center mb-1">
-                  <v-icon color="primary" size="20">mdi-clock-in</v-icon>
-
+                  <v-icon color="primary" size="20">mdi-clock-outline</v-icon>
                   <span class="ml-2 input-label">Check-in</span>
                 </div>
 
                 <v-text-field v-model="turncheckintime" readonly @click="openCheckInDialog" variant="outlined"
-                  density="comfortable" class="glass-input time-field" hide-details></v-text-field>
+                  density="comfortable" class="glass-input time-field" placeholder="12:00 PM"
+                  hide-details></v-text-field>
               </div>
 
               <div class="input-group">
                 <div class="d-flex align-center mb-1">
-                  <v-icon color="primary" size="20">mdi-clock-out</v-icon>
-
+                  <v-icon color="primary" size="20">mdi-clock-outline</v-icon>
                   <span class="ml-2 input-label">Check-out</span>
                 </div>
 
                 <v-text-field v-model="turncheckouttime" readonly @click="openCheckOutDialog" variant="outlined"
-                  density="comfortable" class="glass-input time-field" hide-details></v-text-field>
+                  density="comfortable" class="glass-input time-field" placeholder="12:00 PM"
+                  hide-details></v-text-field>
               </div>
             </div>
           </div>
         </div>
 
         <!-- Event Notes -->
-
         <div class="input-group">
           <div class="d-flex align-center mb-1">
             <v-icon color="primary" size="20">mdi-text-box-outline</v-icon>
-
             <span class="ml-2 input-label">Event Details</span>
           </div>
 
@@ -121,7 +148,6 @@
       <v-card-actions class="modal-actions">
         <v-btn v-if="props.event" color="error" variant="outlined" @click="confirmDelete" class="delete-btn">
           <v-icon size="small" class="mr-1">mdi-delete</v-icon>
-
           Delete Event
         </v-btn>
 
@@ -135,12 +161,10 @@
   </v-dialog>
 
   <!-- Confirmation Dialog for Delete -->
-
   <v-dialog v-model="confirmDeleteDialog" max-width="400px" class="delete-dialog">
     <v-card class="delete-confirm-card">
       <v-card-title class="delete-dialog-title">
         <v-icon color="error" size="24" class="mr-2">mdi-alert-circle</v-icon>
-
         Confirm Delete
       </v-card-title>
 
@@ -227,25 +251,23 @@
   </v-dialog>
 
   <!-- Time Picker Components -->
-
   <TimePicker v-model="turncheckintime" v-model:isVisible="checkInTimeDialog" />
-
   <TimePicker v-model="turncheckouttime" v-model:isVisible="checkOutTimeDialog" />
 </template>
 
 <script setup>
-import { ref, defineProps, defineEmits, watch, computed, onMounted } from "vue";
+import { ref, defineProps, defineEmits, watch, computed, onMounted, nextTick, onBeforeUnmount } from "vue";
 import TimePicker from "./TimePicker.vue";
 
 const props = defineProps({
-  visible: { type: Boolean, default: false },
+  modelValue: { type: Boolean, default: false },
   event: { type: Object, default: null },
   houses: { type: Array, default: () => [] },
   eventStartDate: { type: String, default: "" },
   eventEndDate: { type: String, default: "" },
 });
 
-const emit = defineEmits(["close", "create", "update", "delete", "update:visible"]);
+const emit = defineEmits(["close", "create", "update", "delete", "update:modelValue"]);
 
 // State
 const dialog = ref(false);
@@ -266,9 +288,41 @@ const houseWarningDialog = ref(false);
 const dateWarningDialog = ref(false);
 const turnDateWarningDialog = ref(false);
 
+// Date picker menus
+const startDateMenu = ref(false);
+const endDateMenu = ref(false);
+const turnDateMenu = ref(false);
+
 // Time picker dialogs
 const checkInTimeDialog = ref(false);
 const checkOutTimeDialog = ref(false);
+
+// Formatted dates for display
+const formattedStartDate = computed(() => {
+  if (!eventStartDate.value) return '';
+  return formatDate(eventStartDate.value);
+});
+
+const formattedEndDate = computed(() => {
+  if (!eventEndDate.value) return '';
+  return formatDate(eventEndDate.value);
+});
+
+const formattedTurnDate = computed(() => {
+  if (!turndate.value) return '';
+  return formatDate(turndate.value);
+});
+
+// Date formatting function
+function formatDate(dateString) {
+  if (!dateString) return '';
+  try {
+    const [year, month, day] = dateString.split('-');
+    return `${month}/${day}/${year}`;
+  } catch (e) {
+    return dateString;
+  }
+}
 
 // Add to script section
 const showHouseDropdown = ref(false);
@@ -277,7 +331,6 @@ const showHouseDropdown = ref(false);
 const uniqueHouses = computed(() => {
   // Use a Map to ensure uniqueness by houseId first, then by normalized address
   const uniqueMap = new Map();
-
 
   props.houses.forEach((house) => {
     if (house && house.houseId && house.address) {
@@ -293,22 +346,34 @@ const uniqueHouses = computed(() => {
     a.address.localeCompare(b.address)
   );
 });
+
 // Watch for prop changes
 watch(
-  () => props.visible,
+  () => props.modelValue,
   (val) => {
     dialog.value = val;
-    console.log("Modal visibility prop changed:", val);
+
+    // If opening modal for new event (not editing), ensure house dropdown is highlighted
+    if (val && !props.event) {
+      // Use nextTick to wait for DOM to update
+      nextTick(() => {
+        const selectHeader = document.querySelector('.custom-select-header');
+        if (selectHeader) {
+          selectHeader.classList.add('active');
+          // Use CSS animation instead of chained setTimeout
+          selectHeader.classList.add('initial-highlight');
+        }
+      });
+    }
   },
   { immediate: true }
 );
 
-// Watch dialog changes to emit update:visible events
+// Watch dialog changes to emit update:modelValue events
 watch(
   () => dialog.value,
   (val) => {
-    console.log("Dialog state changed:", val);
-    emit("update:visible", val);
+    emit("update:modelValue", val);
     if (!val) emit("close");
   }
 );
@@ -376,9 +441,8 @@ const loadEventData = (event) => {
 };
 
 const closeModal = () => {
-  console.log("closeModal called in EventModal");
   dialog.value = false;
-  emit("update:visible", false);
+  emit("update:modelValue", false);
   resetForm();
 };
 
@@ -399,30 +463,71 @@ const handleTurnChange = (val) => {
     if (!turndate.value) {
       turndate.value = eventStartDate.value;
     }
-  }
-};
-const toggleHouseDropdown = () => {
-  if (!props.event) {
-    // Only toggle if not in edit mode
-    showHouseDropdown.value = !showHouseDropdown.value;
+
+    // Set default times if not already set
+    if (!turncheckintime.value) {
+      turncheckintime.value = "12:00 PM";
+    }
+
+    if (!turncheckouttime.value) {
+      turncheckouttime.value = "12:00 PM";
+    }
   }
 };
 
-const selectHouse = (house) => {
+const toggleHouseDropdown = (e) => {
+  // Don't toggle if in edit mode (has event)
+  if (!props.event) {
+    // Stop propagation to prevent document click from closing the dropdown immediately
+    if (e) e.stopPropagation();
+
+    showHouseDropdown.value = !showHouseDropdown.value;
+
+    // If we're opening the dropdown, add highlight effect via CSS
+    if (showHouseDropdown.value) {
+      const selectHeader = document.querySelector('.custom-select-header');
+      if (selectHeader) {
+        selectHeader.classList.add('highlight-pulse');
+      }
+    }
+  }
+};
+
+const selectHouse = (house, e) => {
+  // Stop propagation to prevent document click handler
+  if (e) e.stopPropagation();
+
   selectedHouse.value = house;
   showHouseDropdown.value = false;
-  console.log("Selected house:", house);
 };
 
 // Close dropdown when clicking outside
 onMounted(() => {
-  document.addEventListener("click", (e) => {
+  const handleClickOutside = (e) => {
     const container = document.querySelector(".custom-select-container");
-    if (container && !container.contains(e.target)) {
+    const dropdown = document.querySelector(".custom-select-dropdown");
+
+    // Only proceed if dropdown is open and click is outside the container and not on a house option
+    if (
+      showHouseDropdown.value &&
+      container &&
+      !container.contains(e.target) &&
+      dropdown &&
+      !dropdown.contains(e.target) &&
+      !e.target.classList.contains('house-option')
+    ) {
       showHouseDropdown.value = false;
     }
+  };
+
+  document.addEventListener("click", handleClickOutside);
+
+  // Clean up event listener on component unmount
+  onBeforeUnmount(() => {
+    document.removeEventListener("click", handleClickOutside);
   });
 });
+
 const saveEvent = () => {
   // Validate form
   if (!selectedHouse.value) {
@@ -508,10 +613,10 @@ const getHouseColorDot = (item) => {
 }
 
 .event-modal-card {
-  border-radius: 20px;
+  border-radius: 24px;
   overflow: hidden;
   position: relative;
-  background-color: rgba(255, 255, 255, 0.8);
+  background-color: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(12px);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
   width: 100%;
@@ -526,8 +631,8 @@ const getHouseColorDot = (item) => {
   right: 0;
   bottom: 0;
   background: linear-gradient(135deg,
-      rgba(244, 197, 48, 0.25) 0%,
-      rgba(65, 105, 226, 0.05) 100%);
+      rgba(65, 105, 226, 0.05) 0%,
+      rgba(255, 255, 255, 0.95) 100%);
   pointer-events: none;
   z-index: 0;
 }
@@ -566,23 +671,24 @@ const getHouseColorDot = (item) => {
 
 .input-label {
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 00;
   color: rgba(0, 0, 0, 0.7);
 }
 
 .glass-input {
-  background-color: rgba(255, 255, 255, 0.6) !important;
+  background-color: rgba(255, 255, 255, 0.95) !important;
   backdrop-filter: blur(4px);
-  border: 1px solid rgba(65, 105, 226, 0.15) !important;
-  border-radius: 10px !important;
+  border: 1px solid rgba(65, 105, 226, 0.12) !important;
+  border-radius: 12px !important;
   transition: all 0.2s ease;
   margin-top: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
 }
 
 .glass-input:hover {
-  background-color: rgba(255, 255, 255, 0.8) !important;
-  box-shadow: 0 4px 10px rgba(65, 105, 226, 0.08);
-  border: 1px solid rgba(65, 105, 226, 0.3) !important;
+  background-color: #ffffff !important;
+  box-shadow: 0 2px 5px rgba(65, 105, 226, 0.06) !important;
+  border: 1px solid rgba(65, 105, 226, 0.25) !important;
 }
 
 .time-field {
@@ -600,17 +706,17 @@ const getHouseColorDot = (item) => {
 }
 
 .turn-section {
-  background-color: rgba(255, 255, 255, 0.4);
+  background-color: rgba(240, 245, 255, 0.6);
   backdrop-filter: blur(4px);
-  border-radius: 12px;
-  padding: 16px;
-  border: 1px solid rgba(65, 105, 226, 0.1);
+  border-radius: 16px;
+  padding: 8px 12px;
+  border: 1px solid rgba(65, 105, 226, 0.15);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
 }
 
 .turn-details {
-  padding-top: 8px;
-  border-top: 1px solid rgba(65, 105, 226, 0.1);
+  padding-top: 6px;
+  border-top: 1px solid rgba(65, 105, 226, 0.15);
 }
 
 .modal-actions {
@@ -656,7 +762,6 @@ const getHouseColorDot = (item) => {
 }
 
 /* Mobile Responsiveness */
-
 @media (max-width: 600px) {
   .date-range-container {
     grid-template-columns: 1fr;
@@ -678,7 +783,6 @@ const getHouseColorDot = (item) => {
 }
 
 /* Delete Confirmation Dialog Styles */
-
 .delete-dialog :deep(.v-card) {
   border-radius: 16px;
   overflow: hidden;
@@ -741,35 +845,39 @@ const getHouseColorDot = (item) => {
   justify-content: space-between;
   align-items: center;
   padding: 10px 16px;
-  background-color: rgba(255, 255, 255, 0.6);
+  background-color: rgba(250, 252, 255, 0.7);
   border: 1px solid rgba(65, 105, 226, 0.15);
   border-radius: 10px;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
-.ss {
-  background-color: red;
+.custom-select-header.active {
+  border: 1px solid rgba(65, 105, 226, 0.5);
+  background-color: rgba(240, 245, 255, 0.8);
+  box-shadow: 0 2px 8px rgba(65, 105, 226, 0.1);
 }
 
-.custom-select-header:hover {
-  background-color: rgba(255, 255, 255, 0.8);
-  box-shadow: 0 4px 10px rgba(65, 105, 226, 0.08);
-  border: 1px solid rgba(65, 105, 226, 0.3);
+.custom-select-header.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background-color: rgba(245, 247, 250, 0.6);
 }
 
-.aa {
-  background-color: red;
+.custom-select-header:not(.disabled):hover {
+  background-color: rgba(240, 245, 255, 0.9);
+  box-shadow: 0 4px 10px rgba(65, 105, 226, 0.15);
+  border: 1px solid rgba(65, 105, 226, 0.5);
+  transform: translateY(-1px);
 }
 
 .selected-house-display {
   flex: 1;
 }
 
-
-
 .placeholder-text {
-  color: #999;
+  color: #4169e2;
+  font-weight: 500;
 }
 
 .custom-select-dropdown {
@@ -777,23 +885,27 @@ const getHouseColorDot = (item) => {
   top: 100%;
   left: 0;
   right: 0;
-  background: white;
+  background: rgba(255, 255, 255, 0.97);
   border-radius: 10px;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 5px 15px rgba(65, 105, 226, 0.15);
   margin-top: 5px;
   z-index: 10;
   max-height: 200px;
   overflow-y: auto;
+  border: 1px solid rgba(65, 105, 226, 0.3);
+  animation: dropdownFade 0.2s ease-in-out;
 }
 
-.house-option {
-  padding: 10px 16px;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
+@keyframes dropdownFade {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
 
-.house-option:hover {
-  background-color: rgba(65, 105, 226, 0.1);
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Warning Dialog Styles */
@@ -809,8 +921,8 @@ const getHouseColorDot = (item) => {
 
 .warning-dialog-title {
   padding: 20px;
-  background-color: rgba(255, 193, 7, 0.2);
-  color: #e3a008;
+  background-color: rgba(65, 105, 226, 0.15);
+  color: var(--primary-color);
   font-weight: 500;
   display: flex;
   align-items: center;
@@ -840,5 +952,93 @@ const getHouseColorDot = (item) => {
 .confirm-btn:hover {
   box-shadow: 0 4px 12px rgba(65, 105, 226, 0.3) !important;
   transform: translateY(-2px);
+}
+
+.highlight-pulse {
+  animation: highlightPulse 1s ease-in-out;
+  border-color: rgba(65, 105, 226, 0.8) !important;
+}
+
+.initial-highlight {
+  animation: highlightPulse 1s ease-in-out;
+  border-color: rgba(65, 105, 226, 0.8) !important;
+}
+
+/* Fade transition for dialog */
+.fade-transition-enter-active,
+.fade-transition-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.fade-transition-enter-from,
+.fade-transition-leave-to {
+  opacity: 0;
+}
+
+.house-option {
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  border-bottom: 1px solid rgba(65, 105, 226, 0.05);
+}
+
+.house-option:last-child {
+  border-bottom: none;
+}
+
+.house-option:hover {
+  background-color: rgba(65, 105, 226, 0.08);
+}
+
+@keyframes highlightPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(65, 105, 226, 0.5);
+  }
+
+  70% {
+    box-shadow: 0 0 0 10px rgba(65, 105, 226, 0);
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 rgba(65, 105, 226, 0);
+  }
+}
+
+/* Added styles for date fields */
+.date-field::-webkit-calendar-picker-indicator {
+  display: none;
+}
+
+/* Update to more thorough approach to remove calendar icons */
+.date-field {
+  position: relative;
+}
+
+.date-field :deep(input[type="date"]) {
+  position: relative;
+}
+
+.date-field :deep(input[type="date"])::-webkit-calendar-picker-indicator,
+.date-field :deep(input[type="date"])::-webkit-inner-spin-button {
+  display: none !important;
+  -webkit-appearance: none !important;
+  opacity: 0 !important;
+  position: absolute;
+  right: 0;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.date-field :deep(input[type="date"])::-webkit-clear-button {
+  display: none !important;
+}
+
+/* For Firefox */
+.date-field :deep(input[type="date"]) {
+  -moz-appearance: textfield;
+}
+
+.cursor-pointer {
+  cursor: pointer;
 }
 </style>

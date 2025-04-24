@@ -1,7 +1,7 @@
 import { defineStore } from "pinia";
 import { auth, onAuthStateChangedListener, logoutUser } from "../auth";
 import { fetchUserData } from "../user-utils";
-import { doc, updateDoc, arrayUnion, arrayRemove } from "firebase/firestore";
+import { doc, updateDoc, arrayUnion, arrayRemove, collection, addDoc } from "firebase/firestore";
 import { db } from "../firebaseConfig";
 export const useUserStore = defineStore("user", {
   state: () => ({
@@ -37,7 +37,16 @@ export const useUserStore = defineStore("user", {
         if (this.userData === null) {
           this.houses = [];
         } else if (this.userData && Array.isArray(this.userData.houses)) {
-          this.houses = this.userData.houses;
+          // Make a deep copy to ensure reactivity
+          this.houses = JSON.parse(JSON.stringify(this.userData.houses));
+          
+          // Sort houses by address for consistent display
+          this.houses.sort((a, b) => {
+            if (a.address && b.address) {
+              return a.address.localeCompare(b.address);
+            }
+            return 0;
+          });
         } else {
           this.houses = [];
           console.warn("Houses property not found or not an array.");
@@ -69,28 +78,88 @@ export const useUserStore = defineStore("user", {
     async createHouse(newHouse) {
       try {
         if (!this.userData?.id) throw new Error("No user is logged in.");
+        
+        // Create a new house object with all required fields
         const newHouseData = {
           userId: this.userData.id,
           houseId: this.generateHouseId(10),
-          ...newHouse,
+          address: newHouse.address,
+          color: newHouse.color || "#66b8ca",
+          contactnumber: newHouse.contactnumber || "",
+          selected: true
         };
+        
+        console.log("Creating new house:", newHouseData);
+
+        // Update Firestore
         const userDocRef = doc(db, "users", this.userData.id);
         await updateDoc(userDocRef, { houses: arrayUnion(newHouseData) });
-        await this.fetchUserData(auth.currentUser);
+        
+        // Immediately update local state
+        if (!Array.isArray(this.userData.houses)) {
+          this.userData.houses = [];
+        }
+        
+        // Add to both houses arrays for immediate reactivity
+        this.userData.houses.push(newHouseData);
+        this.houses.push(newHouseData);
+        
+        return newHouseData;
       } catch (err) {
+        console.error("Failed to add house:", err);
         this.error = "Failed to add house.";
-        console.error(err);
+        throw err;
       }
     },
     async deleteHouse(house) {
       try {
         if (!this.userData?.id) throw new Error("No user is logged in.");
+        
+        console.log("Deleting house:", house);
+        
+        // Find the exact house to delete by houseId
+        const houseToDelete = this.userData.houses.find(h => h.houseId === house.houseId);
+        
+        if (!houseToDelete) {
+          console.error("House not found for deletion:", house.houseId);
+          throw new Error("House not found");
+        }
+        
         const userDocRef = doc(db, "users", this.userData.id);
-        await updateDoc(userDocRef, { houses: arrayRemove(house) });
-        await this.fetchUserData(auth.currentUser);
+        await updateDoc(userDocRef, { houses: arrayRemove(houseToDelete) });
+        
+        // Immediately update the local state
+        this.userData.houses = this.userData.houses.filter(h => h.houseId !== house.houseId);
+        this.houses = this.houses.filter(h => h.houseId !== house.houseId);
+        
+        console.log("House deleted successfully, remaining houses:", this.houses.length);
+        
+        return true;
       } catch (err) {
         console.error("Failed to delete house:", err);
         this.error = "Failed to delete house.";
+        throw err;
+      }
+    },
+    async createEvent(eventData) {
+      try {
+        if (!this.userData?.id) throw new Error("No user is logged in.");
+        
+        // Ensure userId is set
+        eventData.userId = this.userData.id;
+        
+        // Add to events collection
+        const docRef = await addDoc(collection(db, "events"), eventData);
+        
+        // Return the created event with ID
+        return {
+          id: docRef.id,
+          ...eventData
+        };
+      } catch (err) {
+        console.error("Failed to create event:", err);
+        this.error = "Failed to create event.";
+        throw err;
       }
     },
     async logout() {

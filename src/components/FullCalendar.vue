@@ -6,7 +6,7 @@ import FullCalendar from "@fullcalendar/vue3";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
-import { defineProps } from "vue";
+import { defineProps, nextTick } from "vue";
 import { auth } from "../auth";
 import { db } from "../firebaseConfig";
 import { useUserStore } from "../stores/userStore";
@@ -53,6 +53,7 @@ const {
 const props = defineProps({
   userId: { type: String, required: true },
   selectedHouseId: { type: String, default: null },
+  view: { type: String, default: 'month' }
 });
 
 const viewOptions = [
@@ -62,6 +63,20 @@ const viewOptions = [
 ];
 
 const currentView = ref('dayGridMonth');
+
+// Map external view values to internal FullCalendar view values
+const viewMap = {
+  'month': 'dayGridMonth',
+  'week': 'timeGridWeek',
+  'day': 'timeGridDay'
+};
+
+// Watch for changes in the view prop and update calendar view
+watch(() => props.view, (newView) => {
+  if (newView && viewMap[newView]) {
+    changeCalendarView(viewMap[newView]);
+  }
+});
 
 const changeCalendarView = (view) => {
   if (calendarRef.value && calendarRef.value.getApi) {
@@ -178,7 +193,6 @@ onBeforeUnmount(() => {
 });
 
 const closeEventModal = () => {
-  console.log("Closing event modal");
   isEventModalVisible.value = false;
   isEditMode.value = false;
   selectedEvent.value = null;
@@ -204,15 +218,19 @@ async function fetchEvents(fetchInfo, successCallback, failureCallback) {
 }
 
 function handleDateSelect(selectInfo) {
-  isEventModalVisible.value = true;
-  isEditMode.value = false;
-  console.log('handleDateSelect: isEventModalVisible set to', isEventModalVisible.value);
   const selectedDate = selectInfo.startStr.split("T")[0];
   eventStartDate.value = selectedDate;
   eventEndDate.value = selectedDate;
   selectedEvent.value = null;
 
+  // Unselect before showing modal to prevent UI jank
   calendarRef.value.getApi().unselect();
+
+  // Use nextTick to defer modal opening after other DOM operations
+  nextTick(() => {
+    isEventModalVisible.value = true;
+    isEditMode.value = false;
+  });
 }
 
 // Function to refresh all day cells to show turn highlights
@@ -231,22 +249,30 @@ function refreshTurnDayHighlights() {
     // Create a Set for faster lookups
     const turnDatesSet = new Set(turnDates);
 
-    // Batch DOM operations by minimizing reads before writes
-    const cells = document.querySelectorAll('.fc-daygrid-day');
+    // Minimize DOM operations by first collecting all elements needing changes
+    const cells = Array.from(document.querySelectorAll('.fc-daygrid-day'));
+    const toAdd = [];
+    const toRemove = [];
 
-    // Process all cells in a single pass
     cells.forEach(cell => {
       const cellDate = cell.getAttribute('data-date');
       const shouldHaveClass = turnDatesSet.has(cellDate);
       const hasClass = cell.classList.contains('has-turn-day');
 
-      // Only manipulate DOM when needed
       if (shouldHaveClass && !hasClass) {
-        cell.classList.add('has-turn-day');
+        toAdd.push(cell);
       } else if (!shouldHaveClass && hasClass) {
-        cell.classList.remove('has-turn-day');
+        toRemove.push(cell);
       }
     });
+
+    // Batch DOM operations
+    if (toAdd.length > 0 || toRemove.length > 0) {
+      requestAnimationFrame(() => {
+        toAdd.forEach(cell => cell.classList.add('has-turn-day'));
+        toRemove.forEach(cell => cell.classList.remove('has-turn-day'));
+      });
+    }
   });
 }
 
@@ -276,12 +302,14 @@ async function handleCreateEvent(eventData) {
 }
 
 function editEvent(clickInfo) {
-  isEventModalVisible.value = true;
-  isEditMode.value = true;
   selectedEventId.value = clickInfo.event.id;
   selectedEvent.value = clickInfo.event;
-  console.log("Event clicked, showing modal:", isEventModalVisible.value);
-  console.log("Selected event details:", clickInfo.event);
+
+  // Use nextTick to defer modal opening after other DOM operations
+  nextTick(() => {
+    isEventModalVisible.value = true;
+    isEditMode.value = true;
+  });
 }
 
 // Update the handleEventUpdate function to refresh day cells after updating an event
@@ -360,7 +388,7 @@ async function handleEventResize(eventResizeInfo) {
 
 // Add computed property to filter view options
 const filteredViewOptions = computed(() => {
-  return viewOptions.filter(option => option.value !== currentView.value);
+  return viewOptions;
 });
 
 // Function to navigate to previous month/week/day
@@ -414,37 +442,19 @@ async function handleEventDrop(eventDropInfo) {
       <v-btn icon size="small" class="nav-button" @click="goToPrev">
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="custom-icon">
-          <polyline points="15 18 9 12 15 6"></polyline>
+          <path fill="white" stroke="white" d="M15 4l-8 8 8 8"></path>
         </svg>
       </v-btn>
       <v-btn icon size="small" class="nav-button" @click="goToNext">
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="custom-icon">
-          <polyline points="9 18 15 12 9 6"></polyline>
+          <path fill="white" stroke="white" d="M9 4l8 8-8 8"></path>
         </svg>
       </v-btn>
     </div>
 
     <!-- Updated view selector with white border -->
-    <div class="calendar-header">
-      <v-menu :close-on-content-click="true" location="bottom">
-        <template v-slot:activator="{ props }">
-          <div class="view-selector-container" v-bind="props">
-            <div class="view-selector-display">
-              {{viewOptions.find(v => v.value === currentView).title}}
-              <v-icon size="small" color="white" class="ms-1">mdi-chevron-down</v-icon>
-            </div>
-          </div>
-        </template>
-        <v-list class="view-selector-menu" density="compact">
-          <v-list-item v-for="option in filteredViewOptions" :key="option.value"
-            @click="changeCalendarView(option.value)">
-            <v-list-item-title>{{ option.title }}</v-list-item-title>
-          </v-list-item>
-        </v-list>
-      </v-menu>
-    </div>
-
+ 
     <FullCalendar class="full-calendar v-elevation-25" ref="calendarRef" :options="calendarOptions">
       <template v-slot:eventContent="arg">
         <div class="event-content">
@@ -459,7 +469,7 @@ async function handleEventDrop(eventDropInfo) {
     </FullCalendar>
 
     <!-- Replace both modals with the new EventModal -->
-    <EventModal v-model:visible="isEventModalVisible" :event="selectedEvent" :houses="userStore.userData?.houses || []"
+    <EventModal v-model="isEventModalVisible" :event="selectedEvent" :houses="userStore.userData?.houses || []"
       :event-start-date="eventStartDate" :event-end-date="eventEndDate" @close="closeEventModal"
       @create="handleCreateEvent" @update="handleEventUpdate" @delete="deleteEvent" />
 
@@ -472,7 +482,26 @@ async function handleEventDrop(eventDropInfo) {
 <!--Style----------->
 
 <style>
-/* Add these styles at the root level (remove scoped) */
+/* Performance optimizations first */
+.calendar-container {
+  height: 100vh;
+  contain: strict;
+}
+
+.full-calendar {
+  content-visibility: auto;
+  contain-intrinsic-size: 1000px;
+}
+
+:deep(.fc) {
+  contain: content;
+}
+
+:deep(.fc-view-harness) {
+  content-visibility: auto;
+  contain-intrinsic-size: 800px;
+}
+
 /* Disable all Vuetify transitions globally */
 .v-dialog-transition-enter-active,
 .v-dialog-transition-leave-active,
@@ -619,27 +648,20 @@ async function handleEventDrop(eventDropInfo) {
 }
 
 :deep(.fc-daygrid-event) {
-  padding: 2px 4px !important;
-  border-radius: 4px !important;
-  margin-top: 2px !important;
-  margin-bottom: 2px !important;
-  border: none !important;
   background-color: var(--event-color, var(--primary-color)) !important;
 }
 
 :deep(.fc-daygrid-event-harness) {
-  margin-top: 2px !important;
-  margin-bottom: 2px !important;
+  /* Keep only color-related styling */
 }
 
 :deep(.fc-event-main) {
-  padding: 0 !important;
+  /* Keep only color-related styling */
   color: white !important;
 }
 
 :deep(.fc-event-title) {
-  padding: 0 !important;
-  font-weight: 500 !important;
+  /* Keep only color-related styling */
   color: white !important;
 }
 
@@ -649,16 +671,10 @@ async function handleEventDrop(eventDropInfo) {
 
 /* Update the event content styles */
 .event-content {
-  padding: 1px 3px !important;
-  min-height: 16px !important;
-  border-radius: 4px;
-  overflow: hidden;
   width: 100%;
 }
 
 .event-content-inner {
-  padding: 0px 2px !important;
-  min-height: 14px !important;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -666,43 +682,28 @@ async function handleEventDrop(eventDropInfo) {
 }
 
 .event-title {
-  font-size: 0.85rem !important;
-  line-height: 1.3 !important;
-  font-weight: 500;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   flex: 1;
-  padding-right: 4px;
-  text-transform: uppercase;
   color: white !important;
+  text-transform: uppercase;
 }
 
 /* Update the turn icon styles */
 .event-turn {
-  width: 18px !important;
-  height: 18px !important;
-  margin-top: 0 !important;
-  padding: 1px !important;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.8em;
   background-color: rgba(255, 255, 255, 0.2) !important;
-  border-radius: 3px;
 }
 
 .turn-icon {
-  font-size: 14px !important;
-  margin: 0;
   color: white !important;
 }
 </style>
 
 <style scoped>
-
-  
-
 .calendar-header {
   background: linear-gradient(135deg, var(--primary-color) 0%, var(--success-color) 100%);
   color: white;
@@ -766,16 +767,7 @@ async function handleEventDrop(eventDropInfo) {
 
 .fc-event {
   border: none !important;
-  padding: 4px 8px !important;
-  margin: 2px 0 !important;
-  border-radius: 4px !important;
-  cursor: pointer !important;
-  transition: all 0.3s ease !important;
-}
-
-.fc-event:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  background-color: var(--event-color, var(--primary-color)) !important;
 }
 
 .fc-event.primary {
@@ -849,28 +841,11 @@ async function handleEventDrop(eventDropInfo) {
   z-index: 10;
 }
 
-.view-selector {
-  background-color: var(--primary-color);
-  border-radius: 4px;
-}
 
-.view-selector :deep(.v-field__append-inner) {
-  color: white !important;
-}
 
-.view-selector :deep(.v-field__input) {
-  color: white !important;
-  font-weight: 500;
-}
 
-.view-selector :deep(.v-field) {
-  border-radius: 4px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
 
-:deep(.view-select-menu .v-list-item--active) {
-  background-color: rgba(94, 145, 193, 0.2);
-}
+
 
 .full-calendar {
   flex: 1;
@@ -919,7 +894,7 @@ async function handleEventDrop(eventDropInfo) {
 /* Style the header toolbar with centered title and adjusted navigation */
 :deep(.fc .fc-toolbar.fc-header-toolbar) {
   margin-bottom: 1em;
-  background: linear-gradient(0deg, var(--primary-color) 0%, var(--success-color) 80%);
+  background: #4169e2;
   color: white;
   padding: 8px 8px 20px 8px;
   /* Increased bottom padding by 12px */
@@ -928,18 +903,19 @@ async function handleEventDrop(eventDropInfo) {
   display: flex;
   justify-content: center;
   position: relative;
-
 }
 
 /* Center the title text */
 :deep(.fc-toolbar-title) {
-  font-size: 1.5rem;
+  font-size: 1.4rem;
   font-weight: 500;
   text-align: center;
-  color: white;
+  color: white !important;
   width: 100%;
   position: relative;
   left: 0;
+  text-transform: uppercase;
+  letter-spacing: .8px;
 }
 
 /* Move navigation buttons to the left and make them smaller */
@@ -970,11 +946,7 @@ async function handleEventDrop(eventDropInfo) {
 }
 
 /* Style the bottom of the calendar to ensure rounded corners */
-:deep(.fc-view-harness) {
-  border-bottom-left-radius: 12px;
-  border-bottom-right-radius: 12px;
-  overflow: hidden;
-}
+
 
 /* Keep the existing button styling */
 :deep(.fc .fc-button-primary) {
@@ -994,10 +966,7 @@ async function handleEventDrop(eventDropInfo) {
 
 /* Event styling */
 :deep(.fc-daygrid-event) {
-  border-radius: 5px;
-  font-size: var(--fc-small-font-size);
-  position: relative;
-  white-space: nowrap;
+  background-color: var(--event-color, var(--primary-color)) !important;
 }
 
 /* Style today's date differently */
@@ -1006,28 +975,9 @@ async function handleEventDrop(eventDropInfo) {
 }
 
 /* Custom view selector with white border */
-.view-selector-container {
-  border: 2px solid white;
-  border-radius: 4px;
-  cursor: pointer;
-}
 
-.view-selector-display {
-  background-color: var(--primary-color);
-  color: white;
-  padding: 6px 12px;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 100px;
-}
 
-.view-selector-menu {
-  background-color: white;
-  border-radius: 4px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-}
+
 
 /* Update navigation button positioning for different screen sizes */
 .calendar-navigation {
@@ -1120,136 +1070,35 @@ async function handleEventDrop(eventDropInfo) {
   position: relative;
   z-index: 1;
   background-color: transparent !important;
-  /* Reset the background color */
 }
 
-/* Add a pseudo-element to create the partial yellow background */
+/* Remove the yellow background and dot indicators by emptying these rules */
 :deep(.has-turn-day::after) {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 33%;
-  /* Just one-third of the vertical space */
-  background-color: rgba(244, 197, 48, 0.3);
-  /* Light yellow with transparency - slightly more visible */
-  z-index: -1;
-  /* Place behind content */
-  pointer-events: none;
-  /* Allow clicking through */
-  border-bottom: 1px dashed rgba(244, 152, 0, 0.3);
-  /* Add a subtle border to clearly define the area */
+  display: none;
 }
 
-/* Make sure the day number remains visible over the yellow background */
 :deep(.has-turn-day .fc-daygrid-day-number) {
-  color: rgba(0, 0, 0, 0.9) !important;
-  font-weight: 500;
+  /* Keep normal day number styling */
 }
 
-/* Add a more visible indicator */
 :deep(.has-turn-day::before) {
-  content: "";
-  position: absolute;
-  top: 4px;
-  right: 4px;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background-color: rgba(244, 197, 48, 0.7);
-  /* More visible orange color */
-  z-index: 2;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  display: none;
 }
 
-/* Ensure compatibility with today's date highlight */
 :deep(.fc-day-today.has-turn-day::after) {
-  background-color: rgba(244, 197, 48, 0.4);
-  /* Slightly more opaque for today */
-  border-bottom: 1px dashed rgba(244, 152, 0, 0.5);
-  /* More visible border for today */
+  display: none;
 }
 
-/* Adjustments for different views */
-/* Month view - already covered by the default styles */
-
-/* Week view */
 :deep(.fc-timeGridWeek-view .has-turn-day::after) {
-  height: 20px;
-  /* Fixed height instead of percentage for time grid */
+  display: none;
 }
 
-/* Day view */
 :deep(.fc-timeGridDay-view .has-turn-day::after) {
-  height: 20px;
-  /* Fixed height instead of percentage for time grid */
+  display: none;
 }
 
-/* Ensure the dot indicator is visible across all views */
 :deep(.fc-timeGridWeek-view .has-turn-day::before),
 :deep(.fc-timeGridDay-view .has-turn-day::before) {
-  top: 2px;
-  right: 2px;
-  width: 8px;
-  height: 8px;
-}
-
-/* Make events 25% smaller in height */
-:deep(.fc-daygrid-event-harness) {
-  margin-top: 1px !important;
-  margin-bottom: 1px !important;
-}
-
-:deep(.fc-daygrid-event) {
-  padding-top: 1px !important;
-  padding-bottom: 1px !important;
-  min-height: 18px !important;
-  /* Reduce the minimum height */
-}
-
-/* Adjust events height - make 10% taller than current size */
-:deep(.fc-daygrid-event-harness) {
-  margin-top: 2px !important;
-  margin-bottom: 2px !important;
-}
-
-:deep(.fc-daygrid-event) {
-  padding-top: 2px !important;
-  padding-bottom: 2px !important;
-  min-height: 20px !important;
-  /* Increase from 18px to 20px */
-}
-
-.event-content {
-  padding: 2px 3px !important;
-  min-height: 18px !important;
-  /* Increase from 16px to 18px */
-}
-
-.event-content-inner {
-  padding: 1px 2px !important;
-  min-height: 16px !important;
-  /* Increase from 14px to 16px */
-}
-
-.event-title {
-  font-size: 0.95rem !important;
-  /* Slightly larger font */
-  line-height: 1 !important;
-}
-
-/* Adjust the turn icon size */
-.event-turn {
-  width: 20px !important;
-  /* Increase from 18px to 20px */
-  height: 20px !important;
-  margin-top: 0 !important;
-  padding: 1px !important;
-}
-
-.turn-icon {
-  font-size: 15px !important;
-  /* Slightly larger icon */
+  display: none;
 }
 </style>
