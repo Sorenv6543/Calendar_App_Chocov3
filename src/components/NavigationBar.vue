@@ -84,9 +84,6 @@
                         </div>
                     </v-card>
                 </v-slide-y-transition>
-
-                <HouseModal v-model="showModal" :is-visible="showModal" @closeModal="showModal = false"
-                    @houseAdded="handleHouseAdded" />
             </div>
 
             <!-- View Options -->
@@ -162,9 +159,8 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
 import { format } from 'date-fns';
-import { useUserStore } from "./stores/userStore";
+import { useUserStore } from '../stores/userStore.ts';
 import { auth } from "../auth";
-import HouseModal from "./HouseModal.vue";
 
 // Props
 const props = defineProps({
@@ -191,8 +187,6 @@ const isMobile = ref(false);
 const dateMenu = ref(false);
 const currentDate = ref(new Date().toISOString().substr(0, 10));
 const currentView = ref('month');
-const showModal = ref(false);
-const localHouses = ref([]);
 const confirmDeleteDialog = ref(false);
 const houseToDelete = ref(null);
 
@@ -231,23 +225,13 @@ const getColorClass = (hexColor) => {
     return colorMap[hexColor] || 'primary';
 };
 
-// Computed property to combine userStore houses with any local houses
+// Computed property to display houses from userStore
 const displayedHouses = computed(() => {
-    // Get houses from userStore
-    const storeHouses = userStore.userData?.houses || [];
-
-    // Prefer store houses, but include any local houses that might not be in store yet
-    const combinedHouses = [...storeHouses];
-
-    // Add any local houses that aren't in the store yet (by houseId)
-    localHouses.value.forEach(localHouse => {
-        if (!combinedHouses.some(h => h.houseId === localHouse.houseId)) {
-            combinedHouses.push(localHouse);
-        }
-    });
+    // Get houses directly from userStore
+    const houses = userStore.userData?.houses || [];
 
     // Make sure all houses have a selected property
-    return combinedHouses.map(house => ({
+    return houses.map(house => ({
         ...house,
         selected: typeof house.selected === 'boolean' ? house.selected : true
     }));
@@ -280,8 +264,17 @@ const createEvent = () => {
     emit('create-event');
 };
 
+/**
+ * EVENT EMISSION PATTERN
+ * 
+ * Instead of directly managing modals, this component now follows Vue best practices:
+ * 1. Child components emit events UP to the parent (Home.vue)
+ * 2. Home.vue handles these events and manages state
+ * 3. This avoids duplicate modals and ensures single source of truth
+ */
 const addHouse = () => {
-    showModal.value = true;
+    // Emit event to parent instead of showing modal directly
+    emit('add-house');
 };
 
 const confirmDelete = (house) => {
@@ -297,9 +290,6 @@ const deleteHouse = async () => {
         await userStore.deleteHouse(house);
         console.log("House deleted, refreshing data");
 
-        // Remove from local array immediately for responsive UI
-        localHouses.value = localHouses.value.filter(h => h.houseId !== house.houseId);
-
         // Close the dialog
         confirmDeleteDialog.value = false;
         houseToDelete.value = null;
@@ -314,33 +304,6 @@ const toggleHouseSelection = (house) => {
     emit('toggle-house', house);
 };
 
-const handleHouseAdded = (newHouse) => {
-    console.log("New house added in UI:", newHouse);
-
-    // Add to local array immediately for responsive UI
-    localHouses.value.push({
-        ...newHouse,
-        selected: true
-    });
-};
-
-// Refresh houses from the store
-const refreshHouses = async () => {
-    console.log("Refreshing houses in sidebar...");
-    try {
-        // Force a fetch from Firestore if user is authenticated
-        if (auth.currentUser) {
-            await userStore.fetchUserData(auth.currentUser);
-
-            // Update our local reference with houses from store to maintain reactivity
-            localHouses.value = userStore.userData?.houses ?
-                JSON.parse(JSON.stringify(userStore.userData.houses)) : [];
-        }
-    } catch (error) {
-        console.error("Error refreshing houses:", error);
-    }
-};
-
 // Watch for changes
 watch(currentView, (newView) => {
     emit('change-view', newView);
@@ -349,15 +312,6 @@ watch(currentView, (newView) => {
 watch(currentDate, (newDate) => {
     emit('change-date', newDate);
 });
-
-// Watch for changes to userStore.userData.houses
-watch(() => userStore.userData?.houses, (newHouses) => {
-    console.log("Houses changed in store (sidebar):", newHouses?.length || 0);
-    // Update local reference to store data
-    if (newHouses && Array.isArray(newHouses)) {
-        localHouses.value = JSON.parse(JSON.stringify(newHouses));
-    }
-}, { deep: true });
 
 // Check for mobile on mount and resize
 const checkMobile = () => {
@@ -373,9 +327,6 @@ const checkMobile = () => {
 onMounted(async () => {
     checkMobile();
     window.addEventListener('resize', checkMobile);
-
-    // Initial fetch of houses
-    await refreshHouses();
 });
 </script>
 

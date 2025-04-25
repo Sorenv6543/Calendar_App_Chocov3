@@ -26,7 +26,7 @@ import debounce from 'lodash/debounce';
 import TimePicker from './TimePicker.vue';
 import { useTimeManagement } from '../composables/useTimeManagement';
 // Import the new EventModal component
-import EventModal from './EventModal.vue';
+// import EventModal from './EventModal.vue';
 
 const userStore = useUserStore();
 // Replace these refs
@@ -217,19 +217,31 @@ async function fetchEvents(fetchInfo, successCallback, failureCallback) {
   }
 }
 
+// Add emits to pass event-related actions to parent
+const emit = defineEmits(['openEventModal', 'createEvent', 'updateEvent', 'deleteEvent']);
+
+/**
+ * EVENT DELEGATION ARCHITECTURE
+ * 
+ * Instead of handling modals and Firestore operations directly:
+ * 1. This component emits events UP to the parent (Home.vue)
+ * 2. Home.vue manages modal state and Firestore interactions via userStore
+ * 3. This creates a cleaner separation of concerns:
+ *    - FullCalendar: UI and user interactions
+ *    - Home.vue: Modal/UI state management
+ *    - userStore: Data persistence and business logic
+ */
 function handleDateSelect(selectInfo) {
   const selectedDate = selectInfo.startStr.split("T")[0];
   eventStartDate.value = selectedDate;
   eventEndDate.value = selectedDate;
   selectedEvent.value = null;
 
-  // Unselect before showing modal to prevent UI jank
-  calendarRef.value.getApi().unselect();
-
-  // Use nextTick to defer modal opening after other DOM operations
-  nextTick(() => {
-    isEventModalVisible.value = true;
-    isEditMode.value = false;
+  // Emit to parent instead of showing modal directly
+  emit('openEventModal', {
+    startDate: selectedDate,
+    endDate: selectedDate,
+    event: null
   });
 }
 
@@ -281,92 +293,49 @@ const debouncedRefreshHighlights = debounce(() => {
   refreshTurnDayHighlights();
 }, 200);
 
-// Update the handleCreateEvent function to use debounced refresh
+// Event operations now delegated to parent via events
 async function handleCreateEvent(eventData) {
-  // Add userId to the event data
-  eventData.userId = auth.currentUser.uid;
-
-  try {
-    const docRef = await addDoc(collection(db, "events"), eventData);
-    eventData.id = docRef.id;
-
-    // Refresh the calendar
-    calendarRef.value.getApi().refetchEvents();
-
-    // Use the debounced refresh function only once
-    debouncedRefreshHighlights();
-  } catch (error) {
-    console.error("Error adding event:", error);
-    alert("Failed to create event. Please try again.");
-  }
+  // Emit to parent instead of handling directly
+  emit('createEvent', eventData);
 }
 
 function editEvent(clickInfo) {
-  selectedEventId.value = clickInfo.event.id;
-  selectedEvent.value = clickInfo.event;
+  const event = clickInfo.event;
+  selectedEventId.value = event.id;
 
-  // Use nextTick to defer modal opening after other DOM operations
-  nextTick(() => {
-    isEventModalVisible.value = true;
-    isEditMode.value = true;
+  // Get the event data from the database to ensure we have full details
+  const eventData = event.toPlainObject({ collapseExtendedProps: true });
+  selectedEvent.value = {
+    id: event.id,
+    title: event.title,
+    start: event.startStr,
+    end: event.endStr,
+    ...eventData.extendedProps
+  };
+
+  // Format dates for the event modal
+  eventStartDate.value = formatDateForPicker(event.start);
+  eventEndDate.value = event.end ? formatDateForPicker(event.end) : eventStartDate.value;
+
+  // Emit to parent instead of handling directly in component
+  emit('openEventModal', {
+    startDate: eventStartDate.value,
+    endDate: eventEndDate.value,
+    event: selectedEvent.value
   });
 }
 
 // Update the handleEventUpdate function to refresh day cells after updating an event
 async function handleEventUpdate(updatedEvent) {
-  try {
-    // Update event in Firebase
-    const eventRef = doc(db, "events", selectedEventId.value);
-    await updateDoc(eventRef, updatedEvent);
-
-    // Update local calendar display
-    const calendarApi = calendarRef.value.getApi();
-    const event = calendarApi.getEventById(selectedEventId.value);
-    if (event) {
-      event.setProp('title', updatedEvent.title);
-      event.setStart(updatedEvent.start);
-      event.setEnd(updatedEvent.end);
-      event.setExtendedProp('color', updatedEvent.extendedProps.color);
-      event.setExtendedProp('eventnotes', updatedEvent.extendedProps.eventnotes);
-      event.setExtendedProp('turn', updatedEvent.extendedProps.turn);
-      event.setExtendedProp('turndate', updatedEvent.extendedProps.turndate);
-      event.setExtendedProp('turncheckintime', updatedEvent.extendedProps.turncheckintime);
-      event.setExtendedProp('turncheckouttime', updatedEvent.extendedProps.turncheckouttime);
-    }
-
-    // Refresh events from server
-    calendarApi.refetchEvents();
-
-    // Use the debounced refresh function
-    debouncedRefreshHighlights();
-  } catch (error) {
-    console.error("Error updating event:", error);
-    alert("Failed to update event. Please try again.");
-  }
+  // Emit to parent instead of handling directly
+  emit('updateEvent', updatedEvent);
 }
 
 // Update deleteEvent
 const deleteEvent = async () => {
-  try {
-    const eventRef = doc(db, "events", selectedEventId.value);
-    await deleteDoc(eventRef);
-
-    const calendarApi = calendarRef.value.getApi();
-    const event = calendarApi.getEventById(selectedEventId.value);
-    if (event) {
-      event.remove();
-    }
-
-    // Refresh events to ensure complete sync with Firebase
-    calendarApi.refetchEvents();
-
-    // Use the debounced refresh function
-    debouncedRefreshHighlights();
-  } catch (error) {
-    console.error("Error deleting event:", error);
-    alert("Failed to delete event. Please try again.");
-  }
-};
+  // Emit to parent instead of handling directly
+  emit('deleteEvent', selectedEventId.value);
+}
 
 async function handleEventResize(eventResizeInfo) {
   try {
@@ -454,7 +423,7 @@ async function handleEventDrop(eventDropInfo) {
     </div>
 
     <!-- Updated view selector with white border -->
- 
+
     <FullCalendar class="full-calendar v-elevation-25" ref="calendarRef" :options="calendarOptions">
       <template v-slot:eventContent="arg">
         <div class="event-content">
@@ -467,11 +436,6 @@ async function handleEventDrop(eventDropInfo) {
         </div>
       </template>
     </FullCalendar>
-
-    <!-- Replace both modals with the new EventModal -->
-    <EventModal v-model="isEventModalVisible" :event="selectedEvent" :houses="userStore.userData?.houses || []"
-      :event-start-date="eventStartDate" :event-end-date="eventEndDate" @close="closeEventModal"
-      @create="handleCreateEvent" @update="handleEventUpdate" @delete="deleteEvent" />
 
     <!-- Time picker dialogs remain the same -->
     <TimePicker v-model="turncheckintime" v-model:isVisible="checkInTimeDialog" />
@@ -653,7 +617,8 @@ async function handleEventDrop(eventDropInfo) {
 
 :deep(.fc-daygrid-event-harness) {
   /* Add color-related styling if needed, or remove this ruleset */
-  color: inherit; /* Example placeholder */
+  color: inherit;
+  /* Example placeholder */
 }
 
 :deep(.fc-event-main) {

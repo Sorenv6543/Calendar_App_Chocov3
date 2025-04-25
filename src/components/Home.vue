@@ -25,9 +25,25 @@ const userStore = useUserStore();
 const showSidebar = ref(false);
 const isMobileView = ref(window.innerWidth <= 768);
 const sidebarPersistent = ref(true);
+
+/**
+ * STATE ARCHITECTURE - Modal Management
+ * 
+ * Home.vue serves as the container component that manages all modal state.
+ * Following Vue best practices:
+ * 1. Only one instance of each modal exists in the application
+ * 2. Parent component (Home) controls modal visibility state
+ * 3. Child components emit events up, parent handles state changes
+ * 4. Data flows down as props from parent to child components
+ */
 const showHouseModal = ref(false);
 const showEventModal = ref(false);
 const calendarView = ref("month");
+
+// Event modal state - managed at this level to ensure single source of truth
+const selectedEvent = ref<Record<string, any> | undefined>(undefined); // Using undefined instead of null
+const eventStartDate = ref("");
+const eventEndDate = ref("");
 
 const toggleSidebar = () => {
   showSidebar.value = !showSidebar.value;
@@ -37,6 +53,14 @@ const toggleSidebarPersistent = () => {
   sidebarPersistent.value = !sidebarPersistent.value;
 };
 
+/**
+ * Event handlers for child component events
+ * 
+ * Following the events-up, props-down pattern:
+ * - Child components emit events when user interacts with them
+ * - Parent handles these events and updates state accordingly
+ * - Updated state is passed back down as props
+ */
 const handleAddHouse = () => {
   showHouseModal.value = true;
 };
@@ -48,6 +72,14 @@ const handleCreateEvent = () => {
 // Handle changing calendar view (day, week, month)
 const handleViewChange = (view: string) => {
   calendarView.value = view;
+};
+
+// Handle calendar event modal opening from FullCalendar
+const handleOpenEventModal = (data) => {
+  selectedEvent.value = data.event;
+  eventStartDate.value = data.startDate;
+  eventEndDate.value = data.endDate;
+  showEventModal.value = true;
 };
 
 // Handle creating an event from the modal
@@ -73,6 +105,30 @@ const handleEventCreate = async (eventData: EventData) => {
   }
 };
 
+// Handle event updates from FullCalendar through EventModal
+const handleEventUpdate = async (eventData) => {
+  try {
+    // Update event in Firestore through userStore
+    await userStore.updateEvent(eventData);
+    showEventModal.value = false;
+  } catch (error) {
+    console.error("Error updating event:", error);
+    alert("Failed to update event. Please try again.");
+  }
+};
+
+// Handle event deletion from FullCalendar through EventModal
+const handleEventDelete = async (eventId) => {
+  try {
+    // Delete event in Firestore through userStore
+    await userStore.deleteEvent(eventId);
+    showEventModal.value = false;
+  } catch (error) {
+    console.error("Error deleting event:", error);
+    alert("Failed to delete event. Please try again.");
+  }
+};
+
 // Handle window resize to detect mobile view
 const handleResize = () => {
   isMobileView.value = window.innerWidth <= 768;
@@ -93,21 +149,25 @@ onBeforeUnmount(() => {
 <template>
   <div v-if="userStore.userData" class="app-background">
     <div class="home-container">
+      <!-- NavigationBar emits events up to this parent -->
       <NavigationBar :class="{ show: showSidebar, 'mobile-view': isMobileView }" :persistent="sidebarPersistent"
         @toggle-persistent="toggleSidebarPersistent" @add-house="handleAddHouse" @create-event="handleCreateEvent"
         @logout="userStore.logout" @change-view="handleViewChange" />
 
       <div class="main-content" :class="{ 'sidebar-visible': showSidebar }">
-        <FullCalendar :user-id="userStore.userData?.id" :view="calendarView" />
+        <!-- FullCalendar emits events up to this parent -->
+        <FullCalendar :user-id="userStore.userData?.id" :view="calendarView" @open-event-modal="handleOpenEventModal"
+          @create-event="handleEventCreate" @update-event="handleEventUpdate" @delete-event="handleEventDelete" />
       </div>
 
-      <!-- House Modal -->
+      <!-- Modal components managed at parent level -->
+      <!-- Single source of truth for HouseModal -->
       <HouseModal v-model="showHouseModal" @close="showHouseModal = false" />
 
-      <!-- Event Modal -->
-      <!-- Pass houses to the modal explicitly -->
+      <!-- Single source of truth for EventModal -->
       <EventModal v-model="showEventModal" @close="showEventModal = false" @create="handleEventCreate"
-        :houses="userStore.userData?.houses || []" />
+        :houses="userStore.userData?.houses || []" :event="selectedEvent" :event-start-date="eventStartDate"
+        :event-end-date="eventEndDate" />
     </div>
   </div>
   <div v-else>

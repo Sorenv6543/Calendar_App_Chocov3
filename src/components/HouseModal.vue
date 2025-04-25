@@ -15,7 +15,16 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(["close", "update:modelValue", "closeModal", "houseAdded"]);
+/**
+ * EVENT/PROP PATTERN - MODAL COMPONENT
+ * 
+ * This modal component follows Vue best practices:
+ * 1. It doesn't emit entity events (like houseAdded) - store handles that
+ * 2. It only emits UI events (close, visibility changes)
+ * 3. Parent component (Home.vue) is the single source of truth for visibility
+ * 4. Prevents duplicate modals and duplicate event emissions
+ */
+const emit = defineEmits(["close", "update:modelValue", "closeModal"]);
 
 const userStore = useUserStore();
 
@@ -28,29 +37,23 @@ const isSubmitting = ref(false);
 const errorMessage = ref("");
 const isVisible = ref(false);
 
-// Watch for changes in modelValue prop
+// Simplified watcher logic - use a single watcher
 watch(
-  () => props.modelValue,
-  (val) => {
-    isVisible.value = val;
+  [() => props.modelValue, () => props.isVisible],
+  ([modelValue, visible]) => {
+    // Update internal state without emitting back
+    isVisible.value = modelValue || visible;
   },
   { immediate: true }
 );
 
-// Watch for props.isVisible changes
-watch(
-  () => props.isVisible,
-  (val) => {
-    isVisible.value = val;
-  },
-  { immediate: true }
-);
-
-// Watch for changes in isVisible to emit model updates
+// Only emit when our internal state changes
 watch(
   () => isVisible.value,
   (val) => {
-    emit("update:modelValue", val);
+    if (val !== props.modelValue) {
+      emit("update:modelValue", val);
+    }
   }
 );
 
@@ -64,12 +67,18 @@ const createHouse = async () => {
   errorMessage.value = "";
 
   try {
-    // Create the house in the store
+    /**
+     * STATE MANAGEMENT SEPARATION
+     * 
+     * 1. Create house through store (persistence layer)
+     * 2. Don't emit specific entity events (house added)
+     * 3. The store update will trigger reactivity in parent components
+     * 4. This avoids duplicate houses in the UI
+     */
     const newHouse = await userStore.createHouse(formData.value);
-    console.log("House created successfully:", newHouse);
 
-    // After successful creation, emit the new house
-    emit("houseAdded", newHouse);
+    // Don't emit event anymore - rely on store to update UI
+    // emit("houseAdded", newHouse);
 
     // Close modal
     close();
@@ -82,12 +91,17 @@ const createHouse = async () => {
 };
 
 const close = () => {
+  // Set internal state first
   isVisible.value = false;
+
+  // Reset form data
+  formData.value = { address: "", color: "#66b8ca" };
+  errorMessage.value = "";
+
+  // Emit events in a single batch
   emit("close");
   emit("closeModal");
   emit("update:modelValue", false);
-  formData.value = { address: "", color: "#66b8ca" };
-  errorMessage.value = "";
 };
 </script>
 

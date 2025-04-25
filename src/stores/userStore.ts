@@ -8,6 +8,7 @@ import {
   arrayRemove,
   collection,
   addDoc,
+  deleteDoc,
 } from "firebase/firestore";
 import { db } from "../firebaseConfig";
 
@@ -50,6 +51,19 @@ export const useUserStore = defineStore("user", {
     unsubscribeUser: null as Function | null,
   }),
 
+  /**
+   * CENTRALIZED STATE MANAGEMENT
+   *
+   * The store serves as the single source of truth for:
+   * 1. Application data (userInfo, houses, events)
+   * 2. Data persistence operations (CRUD with Firestore)
+   * 3. State that needs to be shared across components
+   *
+   * Components interact with the store instead of directly with Firestore,
+   * creating a clean separation of concerns:
+   * - Components: Handle UI and user interactions
+   * - Store: Manages data, business logic, and persistence
+   */
   actions: {
     async initAuthListener() {
       this.isLoading = true;
@@ -106,6 +120,17 @@ export const useUserStore = defineStore("user", {
       return result;
     },
 
+    /**
+     * HOUSE MANAGEMENT
+     *
+     * These methods handle all house-related operations:
+     * 1. Update Firestore (persistence layer)
+     * 2. Immediately update local state for responsive UI
+     * 3. Return consistent data to components
+     *
+     * This allows components to be "dumb" UI layers that emit events
+     * while the store handles all data logic.
+     */
     async createHouse(newHouse: Partial<House>) {
       try {
         if (!this.userData?.id) throw new Error("No user is logged in.");
@@ -117,8 +142,12 @@ export const useUserStore = defineStore("user", {
           address: newHouse.address || "",
           color: newHouse.color || "#66b8ca",
           selected: true,
-          contactnumber: newHouse.contactnumber,
         };
+
+        // Only add contactnumber if it's defined (not undefined or null)
+        if (newHouse.contactnumber) {
+          newHouseData.contactnumber = newHouse.contactnumber;
+        }
 
         // Update Firestore
         const userDocRef = doc(db, "users", this.userData.id);
@@ -170,6 +199,17 @@ export const useUserStore = defineStore("user", {
       }
     },
 
+    /**
+     * EVENT MANAGEMENT
+     *
+     * These methods handle all event-related operations:
+     * 1. Manage CRUD operations with Firestore
+     * 2. Ensure consistent error handling
+     * 3. Create a clean API for components to use
+     *
+     * By centralizing these operations, components don't need
+     * to know the details of how data is stored or retrieved.
+     */
     async createEvent(eventData: Partial<Event>) {
       try {
         if (!this.userData?.id) throw new Error("No user is logged in.");
@@ -188,6 +228,43 @@ export const useUserStore = defineStore("user", {
       } catch (err: any) {
         console.error("Failed to create event:", err);
         this.error = "Failed to create event.";
+        throw err;
+      }
+    },
+
+    async updateEvent(eventData: Partial<Event>) {
+      try {
+        if (!this.userData?.id) throw new Error("No user is logged in.");
+        if (!eventData.id) throw new Error("Event ID is required for updates.");
+
+        // Create a copy of the event data without the id field
+        const { id, ...updateData } = eventData;
+
+        // Update the event in Firestore
+        const eventRef = doc(db, "events", id);
+        await updateDoc(eventRef, updateData);
+
+        return true;
+      } catch (err: any) {
+        console.error("Failed to update event:", err);
+        this.error = "Failed to update event.";
+        throw err;
+      }
+    },
+
+    async deleteEvent(eventId: string) {
+      try {
+        if (!this.userData?.id) throw new Error("No user is logged in.");
+        if (!eventId) throw new Error("Event ID is required for deletion.");
+
+        // Delete the event from Firestore
+        const eventRef = doc(db, "events", eventId);
+        await deleteDoc(eventRef);
+
+        return true;
+      } catch (err: any) {
+        console.error("Failed to delete event:", err);
+        this.error = "Failed to delete event.";
         throw err;
       }
     },
