@@ -1,6 +1,6 @@
 import { doc, onSnapshot, updateDoc, arrayRemove } from "firebase/firestore";
 import { db } from "./firebaseConfig";
-import { auth } from "./auth";
+import { getCurrentUser } from "./auth";
 
 // Define interfaces
 interface UserData {
@@ -42,7 +42,7 @@ export const fetchUserData = (currentUser: any, state: StoreState) => {
       if (doc.exists()) {
         const userData = doc.data();
         state.userData = {
-          id: auth.currentUser.uid,
+          id: getCurrentUser() || currentUser.uid,
           email: userData?.email || currentUser.email || "",
           fullName: userData?.fullName || "",
           houses: Array.isArray(userData?.houses) ? userData.houses : [],
@@ -50,7 +50,7 @@ export const fetchUserData = (currentUser: any, state: StoreState) => {
       } else {
         // Create empty userData structure to prevent null references
         state.userData = {
-          id: auth.currentUser.uid,
+          id: getCurrentUser() || currentUser.uid,
           email: currentUser.email || "",
           fullName: "",
           houses: [],
@@ -67,7 +67,7 @@ export const fetchUserData = (currentUser: any, state: StoreState) => {
       // Ensure userData is at least initialized with empty values on error
       if (!state.userData) {
         state.userData = {
-          id: auth.currentUser.uid,
+          id: getCurrentUser() || currentUser.uid,
           email: currentUser.email || "",
           fullName: "",
           houses: [],

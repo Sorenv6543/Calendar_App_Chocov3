@@ -17,7 +17,7 @@ export const loginUser = (email, password) => {
 
 // Get the current authenticated user
 export const getCurrentUser = () => {
-  return auth.currentUser;
+  return auth.currentUser?.uid || null;
 };
 
 // Listen for authentication state changes
