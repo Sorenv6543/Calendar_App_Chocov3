@@ -1,6 +1,6 @@
 <!--Script---------->
 
-<script setup>
+<script setup lang="ts">
 //imports
 import FullCalendar from "@fullcalendar/vue3";
 import dayGridPlugin from "@fullcalendar/daygrid";
@@ -12,8 +12,6 @@ import { db } from "../firebaseConfig";
 import { useUserStore } from "../stores/userStore";
 import {
   collection,
-  addDoc,
-  deleteDoc,
   doc,
   updateDoc,
   query,
@@ -28,17 +26,40 @@ import { useTimeManagement } from '../composables/useTimeManagement';
 // Import the new EventModal component
 // import EventModal from './EventModal.vue';
 
+import type {
+  CalendarEvent,
+  CalendarProps,
+  CalendarEmits,
+  CalendarOptions,
+  CalendarViewOption,
+  EventInfo,
+  CalendarEventSource,
+  CalendarEventSourceSuccessHandler,
+  CalendarEventSourceErrorHandler
+} from '../types/calendar';
+import type { DateSelectArg, EventClickArg, EventInput, EventMountArg } from '@fullcalendar/core';
+import type { EventResizeDoneArg, EventDragStopArg } from '@fullcalendar/interaction';
+
+interface House {
+  userId: string;
+  houseId: string;
+  address: string;
+  color: string;
+  selected?: boolean;
+  contactnumber?: string;
+}
+
 const userStore = useUserStore();
 // Replace these refs
-const isEventModalVisible = ref(false);
-const isEditMode = ref(false);
-const selectedEventId = ref(null);
-const selectedEvent = ref(null);
-const eventStartDate = ref("");
-const eventEndDate = ref("");
-const calendarRef = ref(null);
-const calendarHeight = ref(window.innerHeight - 20); // Set initial height minus some padding
-const selectedHouse = ref(null);
+const isEventModalVisible = ref<boolean>(false);
+const isEditMode = ref<boolean>(false);
+const selectedEventId = ref<string | null>(null);
+const selectedEvent = ref<CalendarEvent | null>(null);
+const eventStartDate = ref<string>("");
+const eventEndDate = ref<string>("");
+const calendarRef = ref<InstanceType<typeof FullCalendar> | null>(null);
+const calendarHeight = ref<number>(window.innerHeight - 20); // Set initial height minus some padding
+const selectedHouse = ref<House | null>(null);
 
 // Use the time management composable
 const {
@@ -50,22 +71,19 @@ const {
   updateCheckOutTime
 } = useTimeManagement();
 
-const props = defineProps({
-  userId: { type: String, required: true },
-  selectedHouseId: { type: String, default: null },
-  view: { type: String, default: 'month' }
-});
+const props = defineProps<CalendarProps>();
+const emit = defineEmits<CalendarEmits>();
 
-const viewOptions = [
+const viewOptions: CalendarViewOption[] = [
   { title: 'Month', value: 'dayGridMonth' },
   { title: 'Week', value: 'timeGridWeek' },
   { title: 'Day', value: 'timeGridDay' }
 ];
 
-const currentView = ref('dayGridMonth');
+const currentView = ref<string>('dayGridMonth');
 
 // Map external view values to internal FullCalendar view values
-const viewMap = {
+const viewMap: Record<string, string> = {
   'month': 'dayGridMonth',
   'week': 'timeGridWeek',
   'day': 'timeGridDay'
@@ -78,10 +96,32 @@ watch(() => props.view, (newView) => {
   }
 });
 
-const changeCalendarView = (view) => {
+const changeCalendarView = (view: string): void => {
   if (calendarRef.value && calendarRef.value.getApi) {
     calendarRef.value.getApi().changeView(view);
     currentView.value = view;
+  }
+};
+
+const fetchEvents = async (
+  fetchInfo: { start: Date; end: Date; timeZone: string },
+  successCallback: CalendarEventSourceSuccessHandler,
+  failureCallback: CalendarEventSourceErrorHandler
+): Promise<void> => {
+  try {
+    const q = query(
+      collection(db, "events"),
+      where("userId", "==", auth.currentUser.uid)
+    );
+    const querySnapshot = await getDocs(q);
+    const events = querySnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    })) as CalendarEvent[];
+    successCallback(events);
+  } catch (error) {
+    console.error("Error fetching events:", error);
+    failureCallback(error as Error);
   }
 };
 
@@ -94,13 +134,13 @@ const calendarOptions = {
   },
   initialView: "dayGridMonth",
   height: calendarHeight.value, // Use dynamic height
-  eventDidMount: (info) => {
+  eventDidMount: (info: EventMountArg) => {
     // Set the event color as a CSS variable
     info.el.style.setProperty('--event-color', info.event.extendedProps.color || '#2979ff');
     info.el.style.backgroundColor = info.event.extendedProps.color || '#2979ff';
     info.el.style.opacity = '1';
   },
-  dayCellDidMount: (arg) => {
+  dayCellDidMount: (arg: { el: HTMLElement; date: Date }) => {
     // Get the date in YYYY-MM-DD format
     const cellDate = arg.date.toISOString().split('T')[0];
     // Check if the cell date is today
@@ -119,7 +159,7 @@ const calendarOptions = {
       arg.el.classList.add('has-turn-day');
     }
   },
-  datesSet: (dateInfo) => {
+  datesSet: (dateInfo: { start: Date; end: Date; startStr: string; endStr: string; timeZone: string }) => {
     // Use the debounced refresh after view changes
     if (calendarRef.value?.getApi()) {
       // First refetch events
@@ -131,24 +171,17 @@ const calendarOptions = {
   selectable: true,
   select: handleDateSelect,
   eventClick: editEvent,
-  events: fetchEvents,
-  eventResize: handleEventResize,
-  // Enable dragging and resizing
+  events: fetchEvents as any, // Type assertion for events function
+  eventResize: handleEventResize as any, // Type assertion for eventResize
   editable: true,
-  // Add handler for drag-and-drop
-  eventDrop: handleEventDrop,
-  // Add virtual scrolling for better performance with many events
+  eventDrop: handleEventDrop as any, // Type assertion for eventDrop
   dayMaxEventRows: true,
-
-  // Preloading of events for faster rendering
   lazyFetching: true,
-
-  // Optimize rendering
   rerenderDelay: 50,
-};
+} as any; // Type assertion for calendarOptions
 
 // Handle window resize to update calendar height
-const handleResize = () => {
+const handleResize = (): void => {
   calendarHeight.value = window.innerHeight - 20; // Subtract padding
   if (calendarRef.value && calendarRef.value.getApi) {
     calendarRef.value.getApi().setOption('height', calendarHeight.value);
@@ -160,7 +193,7 @@ onMounted(() => {
 
   // Set up a watcher for when the calendar is initialized
   const checkCalendarReady = setInterval(() => {
-    if (calendarRef.value && calendarRef.value.getApi) {
+    if (calendarRef.value?.getApi()) {
       clearInterval(checkCalendarReady);
 
       // Initial load of turn day highlights
@@ -192,33 +225,12 @@ onBeforeUnmount(() => {
   window.removeEventListener('resize', handleResize);
 });
 
-const closeEventModal = () => {
+const closeEventModal = (): void => {
   isEventModalVisible.value = false;
   isEditMode.value = false;
   selectedEvent.value = null;
   selectedEventId.value = null;
 };
-
-async function fetchEvents(fetchInfo, successCallback, failureCallback) {
-  try {
-    const q = query(
-      collection(db, "events"),
-      where("userId", "==", auth.currentUser.uid)
-    );
-    const querySnapshot = await getDocs(q);
-    const events = querySnapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
-    successCallback(events);
-  } catch (error) {
-    console.error("Error fetching events:", error);
-    failureCallback(error);
-  }
-}
-
-// Add emits to pass event-related actions to parent
-const emit = defineEmits(['openEventModal', 'createEvent', 'updateEvent', 'deleteEvent']);
 
 /**
  * EVENT DELEGATION ARCHITECTURE
@@ -231,7 +243,7 @@ const emit = defineEmits(['openEventModal', 'createEvent', 'updateEvent', 'delet
  *    - Home.vue: Modal/UI state management
  *    - userStore: Data persistence and business logic
  */
-function handleDateSelect(selectInfo) {
+function handleDateSelect(selectInfo: DateSelectArg): void {
   const selectedDate = selectInfo.startStr.split("T")[0];
   eventStartDate.value = selectedDate;
   eventEndDate.value = selectedDate;
@@ -246,7 +258,7 @@ function handleDateSelect(selectInfo) {
 }
 
 // Function to refresh all day cells to show turn highlights
-function refreshTurnDayHighlights() {
+function refreshTurnDayHighlights(): void {
   const api = calendarRef.value?.getApi();
   if (!api) return;
 
@@ -263,8 +275,8 @@ function refreshTurnDayHighlights() {
 
     // Minimize DOM operations by first collecting all elements needing changes
     const cells = Array.from(document.querySelectorAll('.fc-daygrid-day'));
-    const toAdd = [];
-    const toRemove = [];
+    const toAdd: HTMLElement[] = [];
+    const toRemove: HTMLElement[] = [];
 
     cells.forEach(cell => {
       const cellDate = cell.getAttribute('data-date');
@@ -272,9 +284,9 @@ function refreshTurnDayHighlights() {
       const hasClass = cell.classList.contains('has-turn-day');
 
       if (shouldHaveClass && !hasClass) {
-        toAdd.push(cell);
+        toAdd.push(cell as HTMLElement);
       } else if (!shouldHaveClass && hasClass) {
-        toRemove.push(cell);
+        toRemove.push(cell as HTMLElement);
       }
     });
 
@@ -294,12 +306,12 @@ const debouncedRefreshHighlights = debounce(() => {
 }, 200);
 
 // Event operations now delegated to parent via events
-async function handleCreateEvent(eventData) {
+async function handleCreateEvent(eventData: CalendarEvent) {
   // Emit to parent instead of handling directly
   emit('createEvent', eventData);
 }
 
-function editEvent(clickInfo) {
+function editEvent(clickInfo: EventClickArg): void {
   const event = clickInfo.event;
   selectedEventId.value = event.id;
 
@@ -311,10 +323,10 @@ function editEvent(clickInfo) {
     start: event.startStr,
     end: event.endStr,
     ...eventData.extendedProps
-  };
+  } as CalendarEvent;
 
   // Format dates for the event modal
-  eventStartDate.value = formatDateForPicker(event.start);
+  eventStartDate.value = event.start ? formatDateForPicker(event.start) : '';
   eventEndDate.value = event.end ? formatDateForPicker(event.end) : eventStartDate.value;
 
   // Emit to parent instead of handling directly in component
@@ -326,24 +338,24 @@ function editEvent(clickInfo) {
 }
 
 // Update the handleEventUpdate function to refresh day cells after updating an event
-async function handleEventUpdate(updatedEvent) {
+async function handleEventUpdate(updatedEvent: CalendarEvent) {
   // Emit to parent instead of handling directly
   emit('updateEvent', updatedEvent);
 }
 
 // Update deleteEvent
-const deleteEvent = async () => {
+const deleteEvent = async (): Promise<void> => {
   // Emit to parent instead of handling directly
-  emit('deleteEvent', selectedEventId.value);
+  emit('deleteEvent', selectedEventId.value!);
 }
 
-async function handleEventResize(eventResizeInfo) {
+async function handleEventResize(resizeInfo: EventResizeDoneArg): Promise<void> {
   try {
-    const { id, start, end } = eventResizeInfo.event;
+    const { id, start, end } = resizeInfo.event;
 
-    const updatedEvent = {
-      start: start.toISOString(),
-      end: end ? end.toISOString() : null,
+    const updatedEvent: Partial<CalendarEvent> = {
+      start: start ? start.toISOString() : undefined,
+      end: end ? end.toISOString() : undefined
     };
 
     const eventRef = doc(db, "events", id);
@@ -356,50 +368,53 @@ async function handleEventResize(eventResizeInfo) {
 }
 
 // Add computed property to filter view options
-const filteredViewOptions = computed(() => {
+const filteredViewOptions = computed<CalendarViewOption[]>(() => {
   return viewOptions;
 });
 
 // Function to navigate to previous month/week/day
-const goToPrev = () => {
+const goToPrev = (): void => {
   if (calendarRef.value && calendarRef.value.getApi) {
     calendarRef.value.getApi().prev();
   }
 };
 
 // Function to navigate to next month/week/day
-const goToNext = () => {
+const goToNext = (): void => {
   if (calendarRef.value && calendarRef.value.getApi) {
     calendarRef.value.getApi().next();
   }
 };
 
-// Add the eventDrop handler function
-async function handleEventDrop(eventDropInfo) {
+// Update the eventDrop handler function to use EventDragStopArg
+async function handleEventDrop(dropInfo: EventDragStopArg): Promise<void> {
   try {
-    const { id, start, end } = eventDropInfo.event;
+    const { id, start, end } = dropInfo.event;
 
-    // Prepare the updated data, ensuring proper date formatting
-    const updatedEvent = {
-      start: start ? start.toISOString() : null, // Handle potential null start
-      end: end ? end.toISOString() : null, // Handle potential null end
+    const updatedEvent: Partial<CalendarEvent> = {
+      start: start ? start.toISOString() : undefined,
+      end: end ? end.toISOString() : undefined
     };
 
-    // Get a reference to the Firestore document
     const eventRef = doc(db, "events", id);
-    // Update the document in Firestore
     await updateDoc(eventRef, updatedEvent);
 
     console.log(`Event ${id} dropped successfully in Firestore.`);
-    // Optionally refresh events or UI elements if needed
-    // calendarRef.value?.getApi().refetchEvents(); // Uncomment if a full refresh is desired
   } catch (error) {
     console.error("Error updating event position in Firestore:", error);
-    // Optionally revert the change in the calendar UI
-    eventDropInfo.revert();
+    // Use type assertion for revert method
+    (dropInfo as any).revert();
     alert("Failed to update event position. Please try again.");
   }
 }
+
+// Add the formatDateForPicker function with proper null handling
+const formatDateForPicker = (date: Date | null): string => {
+  if (!date) return '';
+  const isoString = date.toISOString();
+  const datePart = isoString.split('T')[0];
+  return datePart as string;
+};
 </script>
 
 <!--Template-------->
@@ -438,8 +453,8 @@ async function handleEventDrop(eventDropInfo) {
     </FullCalendar>
 
     <!-- Time picker dialogs remain the same -->
-    <TimePicker v-model="turncheckintime" v-model:isVisible="checkInTimeDialog" />
-    <TimePicker v-model="turncheckouttime" v-model:isVisible="checkOutTimeDialog" />
+    <TimePicker v-model="turncheckintime as unknown as string" v-model:isVisible="checkInTimeDialog" />
+    <TimePicker v-model="turncheckouttime as unknown as string" v-model:isVisible="checkOutTimeDialog" />
   </div>
 </template>
 
@@ -590,7 +605,7 @@ async function handleEventDrop(eventDropInfo) {
   will-change: auto !important;
 }
 
-/* Ensure no smooth ing */
+/* Ensure no smooth scrolling */
 .modal-content-bg {
   scroll-behavior: auto !important;
 }
@@ -674,7 +689,6 @@ async function handleEventDrop(eventDropInfo) {
   background: linear-gradient(135deg, var(--primary-color) 0%, var(--success-color) 100%);
   color: white;
   padding: 0px;
-
   margin-bottom: 0px;
 }
 
@@ -807,12 +821,6 @@ async function handleEventDrop(eventDropInfo) {
   z-index: 10;
 }
 
-
-
-
-
-
-
 .full-calendar {
   flex: 1;
   /* Take all available space */
@@ -913,7 +921,6 @@ async function handleEventDrop(eventDropInfo) {
 
 /* Style the bottom of the calendar to ensure rounded corners */
 
-
 /* Keep the existing button styling */
 :deep(.fc .fc-button-primary) {
   background-color: var(--primary-color);
@@ -941,9 +948,6 @@ async function handleEventDrop(eventDropInfo) {
 }
 
 /* Custom view selector with white border */
-
-
-
 
 /* Update navigation button positioning for different screen sizes */
 .calendar-navigation {

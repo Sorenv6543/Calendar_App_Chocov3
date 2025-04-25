@@ -8,7 +8,7 @@ import {
   Calendar,
   CustomRenderingStore
 } from "./chunk-EPYTY5BN.js";
-import "./chunk-JVWSFFO4.js";
+import "./chunk-BUSYA2B4.js";
 
 // node_modules/@fullcalendar/vue3/dist/options.js
 var OPTION_IS_COMPLEX = {

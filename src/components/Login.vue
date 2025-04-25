@@ -56,24 +56,26 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue';
 import { loginUser } from '../auth';
 import { useRouter } from 'vue-router';
+import type { FirebaseError } from 'firebase/app';
 
 const router = useRouter();
-const email = ref('');
-const password = ref('');
-const error = ref('');
-const isLoading = ref(false);
+const email = ref<string>('');
+const password = ref<string>('');
+const error = ref<string>('');
+const isLoading = ref<boolean>(false);
 
-const login = async () => {
+const login = async (): Promise<void> => {
   try {
     isLoading.value = true;
     await loginUser(email.value, password.value);
     router.push('/home');
   } catch (err) {
-    error.value = err.message;
+    const firebaseError = err as FirebaseError;
+    error.value = firebaseError.message;
   } finally {
     isLoading.value = false;
   }

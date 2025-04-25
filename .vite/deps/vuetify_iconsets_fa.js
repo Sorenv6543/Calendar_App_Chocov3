@@ -1,9 +1,9 @@
 import {
   VClassIcon
-} from "./chunk-YMX75DDC.js";
-import "./chunk-PEHW3TFN.js";
+} from "./chunk-VQS5S42S.js";
+import "./chunk-TIEWGVU7.js";
 import "./chunk-IJV5NOMV.js";
-import "./chunk-JVWSFFO4.js";
+import "./chunk-BUSYA2B4.js";
 
 // node_modules/vuetify/lib/iconsets/fa.js
 var aliases = {

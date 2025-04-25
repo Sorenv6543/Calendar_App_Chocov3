@@ -1,40 +1,33 @@
-import "./chunk-5TB2DMNK.js";
-import {
-  GoToSymbol,
-  createGoTo,
-  useGoTo
-} from "./chunk-VDWLELRN.js";
 import {
   DateAdapterSymbol,
   DateOptionsSymbol,
+  GoToSymbol,
   createDate,
-  useDate
-} from "./chunk-WWFMKSTB.js";
+  createGoTo,
+  useDate,
+  useGoTo
+} from "./chunk-MU4ZMEAB.js";
 import {
   useLayout
-} from "./chunk-A3NQ477W.js";
-import "./chunk-3AXCWAVL.js";
-import {
-  IconSymbol,
-  createIcons
-} from "./chunk-YMX75DDC.js";
+} from "./chunk-7GRRHXOQ.js";
 import {
   DisplaySymbol,
   createDisplay,
   useDisplay
-} from "./chunk-LSCPAXVH.js";
+} from "./chunk-6SQO24FJ.js";
 import {
   LocaleSymbol,
-  createLocale,
-  useLocale,
-  useRtl
-} from "./chunk-CTAOLQID.js";
-import {
   ThemeSymbol,
+  createLocale,
   createTheme,
+  useLocale,
+  useRtl,
   useTheme
-} from "./chunk-PHPTPMQS.js";
-import "./chunk-5K4BOYI5.js";
+} from "./chunk-UAAK7NZW.js";
+import {
+  IconSymbol,
+  createIcons
+} from "./chunk-VQS5S42S.js";
 import {
   DefaultsSymbol,
   IN_BROWSER,
@@ -42,13 +35,13 @@ import {
   defineComponent,
   mergeDeep,
   useDefaults
-} from "./chunk-PEHW3TFN.js";
+} from "./chunk-TIEWGVU7.js";
 import {
   effectScope,
   nextTick,
   reactive
 } from "./chunk-IJV5NOMV.js";
-import "./chunk-JVWSFFO4.js";
+import "./chunk-BUSYA2B4.js";
 
 // node_modules/vuetify/lib/framework.js
 function createVuetify() {

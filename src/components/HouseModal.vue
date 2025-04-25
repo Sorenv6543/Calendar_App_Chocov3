@@ -1,18 +1,22 @@
 <!--Script---------->
 
-<script setup>
+<script setup lang="ts">
 import { ref, watch } from "vue";
 import { useUserStore } from "../stores/userStore";
 
-const props = defineProps({
-  modelValue: {
-    type: Boolean,
-    default: false,
-  },
-  isVisible: {
-    type: Boolean,
-    default: false,
-  }
+interface HouseFormData {
+  address: string;
+  color: string;
+}
+
+interface Props {
+  modelValue: boolean;
+  isVisible: boolean;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  modelValue: false,
+  isVisible: false
 });
 
 /**
@@ -24,23 +28,27 @@ const props = defineProps({
  * 3. Parent component (Home.vue) is the single source of truth for visibility
  * 4. Prevents duplicate modals and duplicate event emissions
  */
-const emit = defineEmits(["close", "update:modelValue", "closeModal"]);
+const emit = defineEmits<{
+  (e: "close"): void;
+  (e: "update:modelValue", value: boolean): void;
+  (e: "closeModal"): void;
+}>();
 
 const userStore = useUserStore();
 
-const formData = ref({
+const formData = ref<HouseFormData>({
   address: "",
   color: "#66b8ca", // Default color
 });
 
-const isSubmitting = ref(false);
-const errorMessage = ref("");
-const isVisible = ref(false);
+const isSubmitting = ref<boolean>(false);
+const errorMessage = ref<string>("");
+const isVisible = ref<boolean>(false);
 
 // Simplified watcher logic - use a single watcher
 watch(
   [() => props.modelValue, () => props.isVisible],
-  ([modelValue, visible]) => {
+  ([modelValue, visible]: [boolean, boolean]) => {
     // Update internal state without emitting back
     isVisible.value = modelValue || visible;
   },
@@ -50,14 +58,14 @@ watch(
 // Only emit when our internal state changes
 watch(
   () => isVisible.value,
-  (val) => {
+  (val: boolean) => {
     if (val !== props.modelValue) {
       emit("update:modelValue", val);
     }
   }
 );
 
-const createHouse = async () => {
+const createHouse = async (): Promise<void> => {
   if (!formData.value.address) {
     errorMessage.value = "Address is required.";
     return;
@@ -75,10 +83,7 @@ const createHouse = async () => {
      * 3. The store update will trigger reactivity in parent components
      * 4. This avoids duplicate houses in the UI
      */
-    const newHouse = await userStore.createHouse(formData.value);
-
-    // Don't emit event anymore - rely on store to update UI
-    // emit("houseAdded", newHouse);
+    await userStore.createHouse(formData.value);
 
     // Close modal
     close();
@@ -90,7 +95,7 @@ const createHouse = async () => {
   }
 };
 
-const close = () => {
+const close = (): void => {
   // Set internal state first
   isVisible.value = false;
 
