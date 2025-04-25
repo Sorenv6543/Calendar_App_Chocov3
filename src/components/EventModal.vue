@@ -23,7 +23,7 @@
                   <span>{{ selectedHouse.address }}</span>
                 </div>
                 <span v-else class="placeholder-text">{{ props.event ? "No house associated" : "Click to select a house"
-                  }}</span>
+                }}</span>
               </div>
               <v-icon v-if="!props.event" color="primary">mdi-chevron-down</v-icon>
             </div>
@@ -1041,6 +1041,7 @@ const getHouseColorDot = (item) => {
 /* For Firefox */
 .date-field :deep(input[type="date"]) {
   -moz-appearance: textfield;
+  appearance: textfield;
 }
 
 .cursor-pointer {

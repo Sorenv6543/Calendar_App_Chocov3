@@ -91,22 +91,27 @@
 
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref } from "vue";
 import { useUserStore } from "../stores/userStore";
 
-
+// Define interfaces for type safety
+interface NewHouse {
+  address: string;
+  contactnumber: string;
+  color: string;
+}
 
 const userStore = useUserStore();
 const showAddHouseModal = ref(false);
-const newHouse = ref({
+const newHouse = ref<NewHouse>({
   address: "",
   contactnumber: "",
   color: "#66b8ca"
 });
 
 // Function to get the first letter of the email
-function getFirstLetterOfEmail() {
+function getFirstLetterOfEmail(): string {
   if (userStore.userData?.email) {
     return userStore.userData.email.charAt(0).toUpperCase();
   }
@@ -142,11 +147,11 @@ async function addHouse() {
   }
 }
 
-async function deleteHouse(houseId) {
+async function deleteHouse(houseId: string) {
   if (confirm("Are you sure you want to delete this house?")) {
     try {
       // Find the house object by houseId
-      const house = userStore.userData.houses.find(h => h.houseId === houseId);
+      const house = userStore.userData?.houses.find(h => h.houseId === houseId);
 
       if (house) {
         // Use the userStore's deleteHouse method which properly updates the main user document

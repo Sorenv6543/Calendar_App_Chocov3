@@ -1,13 +1,13 @@
 import {
-  Calendar,
-  CustomRenderingStore
-} from "./chunk-EPYTY5BN.js";
-import {
   Fragment,
   Teleport,
   defineComponent,
   h
 } from "./chunk-IJV5NOMV.js";
+import {
+  Calendar,
+  CustomRenderingStore
+} from "./chunk-EPYTY5BN.js";
 import "./chunk-JVWSFFO4.js";
 
 // node_modules/@fullcalendar/vue3/dist/options.js

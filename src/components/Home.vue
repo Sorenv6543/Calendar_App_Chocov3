@@ -9,6 +9,17 @@ import FullCalendar from "./FullCalendar.vue";
 import HouseModal from "./HouseModal.vue";
 import EventModal from "./EventModal.vue";
 
+// Define types
+interface EventData {
+  userId?: string;
+  title: string;
+  start: string;
+  end: string;
+  houseId?: string;
+  description?: string;
+  [key: string]: any;
+}
+
 const router = useRouter();
 const userStore = useUserStore();
 const showSidebar = ref(false);
@@ -35,15 +46,17 @@ const handleCreateEvent = () => {
 };
 
 // Handle changing calendar view (day, week, month)
-const handleViewChange = (view) => {
+const handleViewChange = (view: string) => {
   calendarView.value = view;
 };
 
 // Handle creating an event from the modal
-const handleEventCreate = async (eventData) => {
+const handleEventCreate = async (eventData: EventData) => {
   try {
     // Add user ID to the event data
-    eventData.userId = userStore.userData.id;
+    if (userStore.userData) {
+      eventData.userId = userStore.userData.id;
+    }
 
     // Call the store method to save event to the database
     const result = await userStore.createEvent(eventData);
@@ -85,7 +98,7 @@ onBeforeUnmount(() => {
         @logout="userStore.logout" @change-view="handleViewChange" />
 
       <div class="main-content" :class="{ 'sidebar-visible': showSidebar }">
-        <FullCalendar :user-id="userStore.userData.id" :view="calendarView" />
+        <FullCalendar :user-id="userStore.userData?.id" :view="calendarView" />
       </div>
 
       <!-- House Modal -->

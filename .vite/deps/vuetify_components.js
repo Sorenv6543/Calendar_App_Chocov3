@@ -1,21 +1,27 @@
 import {
-  Touch,
-  VTooltip,
-  touch_default
-} from "./chunk-6FB6KESX.js";
+  VNavigationDrawer
+} from "./chunk-VKZHBUHT.js";
 import {
-  VMain
-} from "./chunk-CEBXOWTH.js";
+  VAlert,
+  VAlertTitle
+} from "./chunk-SXEJTFZJ.js";
 import {
-  VApp
-} from "./chunk-A3FVDIK7.js";
+  VColorPicker,
+  VSlider,
+  VSliderThumb,
+  VSliderTrack,
+  getOffset,
+  makeSliderProps,
+  useSlider,
+  useSteps
+} from "./chunk-ZB6KUZ3Q.js";
 import "./chunk-4MMPKXON.js";
 import {
-  VSwitch
-} from "./chunk-MD6D6UV6.js";
-import {
   VTextarea
-} from "./chunk-55NN3F2L.js";
+} from "./chunk-6U577OC3.js";
+import {
+  VSwitch
+} from "./chunk-PTISAWMU.js";
 import {
   VChip,
   VChipGroup,
@@ -29,17 +35,59 @@ import {
   makeVirtualProps,
   useScrolling,
   useVirtual
-} from "./chunk-L5UWJPJC.js";
+} from "./chunk-YRG2KRJY.js";
 import {
   VTextField,
   makeVTextFieldProps
-} from "./chunk-WQJAUX4E.js";
+} from "./chunk-FB6L6Z6D.js";
 import {
   VCounter,
   VField,
   VFieldLabel,
   makeVFieldProps
-} from "./chunk-QL26ZXHS.js";
+} from "./chunk-34H5NRH7.js";
+import {
+  VCheckbox,
+  VCheckboxBtn
+} from "./chunk-DEXBCAVR.js";
+import {
+  VSelectionControl,
+  VSelectionControlGroup,
+  makeSelectionControlGroupProps,
+  makeVSelectionControlProps
+} from "./chunk-ALBNFCPF.js";
+import {
+  VInput,
+  VLabel,
+  VMessages,
+  makeFocusProps,
+  makeVInputProps,
+  makeValidationProps,
+  useFocus,
+  useValidation
+} from "./chunk-4ARY7GJK.js";
+import {
+  VDatePicker,
+  VDatePickerControls,
+  VDatePickerHeader,
+  VDatePickerMonth,
+  VDatePickerMonths,
+  VDatePickerYears
+} from "./chunk-LR67I3CZ.js";
+import {
+  VSheet,
+  makeVSheetProps
+} from "./chunk-QLYPS4WY.js";
+import {
+  VDialog,
+  makeVDialogProps
+} from "./chunk-7DNAT2WU.js";
+import {
+  VCol,
+  VContainer,
+  VRow,
+  VSpacer
+} from "./chunk-EGLM73MS.js";
 import {
   VList,
   VListGroup,
@@ -52,207 +100,14 @@ import {
   VListSubheader,
   transformItem,
   useItems
-} from "./chunk-LIHBGINK.js";
+} from "./chunk-55MGAYUK.js";
+import {
+  VDivider
+} from "./chunk-3WU2WSPU.js";
 import {
   VMenu,
   makeVMenuProps
-} from "./chunk-MBMNNI4A.js";
-import {
-  VNavigationDrawer
-} from "./chunk-225XTGVE.js";
-import {
-  useSsrBoot
-} from "./chunk-466BNEND.js";
-import {
-  VAlert,
-  VAlertTitle
-} from "./chunk-HFYZAKUU.js";
-import {
-  VColorPicker,
-  VSlider,
-  VSliderThumb,
-  VSliderTrack,
-  getOffset,
-  makeSliderProps,
-  useSlider,
-  useSteps
-} from "./chunk-AQKVJXAK.js";
-import "./chunk-5TB2DMNK.js";
-import {
-  VuetifyLayoutKey,
-  createLayout,
-  makeLayoutItemProps,
-  makeLayoutProps,
-  useLayout,
-  useLayoutItem
-} from "./chunk-4FHEXSZ6.js";
-import "./chunk-T4QVTMKH.js";
-import "./chunk-2EAVJR66.js";
-import {
-  VCard,
-  VCardActions,
-  VCardItem,
-  VCardSubtitle,
-  VCardText,
-  VCardTitle
-} from "./chunk-ASDDPR5W.js";
-import {
-  VAvatar
-} from "./chunk-XG7Y2GWM.js";
-import {
-  VImg,
-  VResponsive,
-  makeVImgProps
-} from "./chunk-GJSRKDES.js";
-import {
-  intersect_default
-} from "./chunk-YDUKL6MO.js";
-import {
-  VCheckbox,
-  VCheckboxBtn
-} from "./chunk-5MRGXIPA.js";
-import {
-  VSelectionControl,
-  VSelectionControlGroup,
-  makeSelectionControlGroupProps,
-  makeVSelectionControlProps
-} from "./chunk-NLJL2JLN.js";
-import {
-  VInput,
-  VLabel,
-  VMessages,
-  createForm,
-  makeFocusProps,
-  makeFormProps,
-  makeVInputProps,
-  makeValidationProps,
-  useFocus,
-  useForm,
-  useValidation
-} from "./chunk-YZSOCXZ7.js";
-import {
-  VDatePicker,
-  VDatePickerControls,
-  VDatePickerHeader,
-  VDatePickerMonth,
-  VDatePickerMonths,
-  VDatePickerYears
-} from "./chunk-UHE65JCM.js";
-import {
-  VCol,
-  VContainer,
-  VRow,
-  VSpacer
-} from "./chunk-5POO2KNA.js";
-import {
-  VSheet,
-  makeVSheetProps
-} from "./chunk-KZLBA4MH.js";
-import "./chunk-C6ERR5TO.js";
-import {
-  VBtn,
-  VBtnToggle,
-  VBtnToggleSymbol,
-  makeVBtnProps
-} from "./chunk-NKKERQVW.js";
-import {
-  VProgressCircular
-} from "./chunk-A76XLDER.js";
-import {
-  makeGroupItemProps,
-  makeGroupProps,
-  useGroup,
-  useGroupItem
-} from "./chunk-45KIIOJJ.js";
-import {
-  useResizeObserver
-} from "./chunk-6TLAQ63K.js";
-import {
-  VBtnGroup
-} from "./chunk-IXYVCH5X.js";
-import {
-  makePositionProps,
-  usePosition
-} from "./chunk-CRUHTZHZ.js";
-import {
-  LoaderSlot,
-  VProgressLinear,
-  makeLoaderProps,
-  makeLocationProps,
-  useIntersectionObserver,
-  useLoader,
-  useLocation
-} from "./chunk-2NY3KB7U.js";
-import {
-  makeElevationProps,
-  useElevation
-} from "./chunk-L3T33GX2.js";
-import {
-  genOverlays,
-  makeVariantProps,
-  useVariant
-} from "./chunk-3D73P7BU.js";
-import {
-  makeBorderProps,
-  useBorder
-} from "./chunk-RPNO4C5U.js";
-import {
-  makeRoundedProps,
-  useRounded
-} from "./chunk-N35KUXQW.js";
-import {
-  Ripple
-} from "./chunk-ZTKL65DD.js";
-import {
-  VIcon,
-  makeSizeProps,
-  useSize
-} from "./chunk-3HK7SDKK.js";
-import {
-  IconValue,
-  VClassIcon,
-  VComponentIcon,
-  VLigatureIcon,
-  VSvgIcon
-} from "./chunk-WYYYIBD5.js";
-import {
-  makeDensityProps,
-  useDensity
-} from "./chunk-2ZYB6NOD.js";
-import {
-  makeTagProps
-} from "./chunk-6EOBMBQ5.js";
-import {
-  VDialog,
-  makeVDialogProps
-} from "./chunk-EZTO7NOV.js";
-import {
-  VOverlay,
-  makeLazyProps,
-  makeVOverlayProps,
-  useHydration,
-  useLazy
-} from "./chunk-IJ3XMS3D.js";
-import {
-  forwardRefs
-} from "./chunk-U5743ICF.js";
-import {
-  makeDelayProps,
-  useDelay,
-  useScopeId
-} from "./chunk-VYEWM7O5.js";
-import {
-  makeDisplayProps,
-  useDisplay
-} from "./chunk-GBQ5UQES.js";
-import {
-  makeRouterProps,
-  useLink
-} from "./chunk-R6IPZ5EZ.js";
-import "./chunk-GSWLJLRT.js";
-import {
-  VDefaultsProvider
-} from "./chunk-6XKHJKEV.js";
+} from "./chunk-OWPGRR73.js";
 import {
   VDialogBottomTransition,
   VDialogTopTransition,
@@ -270,36 +125,184 @@ import {
   VSlideXTransition,
   VSlideYReverseTransition,
   VSlideYTransition
-} from "./chunk-DLUJWSKP.js";
+} from "./chunk-3CIWCU3C.js";
+import {
+  VApp
+} from "./chunk-MFB34THK.js";
+import {
+  VMain
+} from "./chunk-IPVZ5UCV.js";
+import {
+  useSsrBoot
+} from "./chunk-466BNEND.js";
+import {
+  VCard,
+  VCardActions,
+  VCardItem,
+  VCardSubtitle,
+  VCardText,
+  VCardTitle
+} from "./chunk-6W3OJ4N6.js";
+import {
+  VAvatar
+} from "./chunk-IYN4JQ4K.js";
+import {
+  VImg,
+  VResponsive,
+  makeVImgProps
+} from "./chunk-FE3XAPOH.js";
+import {
+  VBtn,
+  VBtnToggle,
+  VBtnToggleSymbol,
+  makeVBtnProps
+} from "./chunk-3DJEZ3IS.js";
+import {
+  VProgressCircular
+} from "./chunk-SIBEZVMV.js";
+import {
+  makeGroupItemProps,
+  makeGroupProps,
+  useGroup,
+  useGroupItem
+} from "./chunk-B742VKIG.js";
+import {
+  makePositionProps,
+  usePosition
+} from "./chunk-ZTHZNQID.js";
+import {
+  LoaderSlot,
+  VProgressLinear,
+  makeLoaderProps,
+  makeLocationProps,
+  useIntersectionObserver,
+  useLoader,
+  useLocation
+} from "./chunk-IJDFSMSA.js";
+import {
+  VIcon,
+  makeSizeProps,
+  useSize
+} from "./chunk-MDOMMZER.js";
+import "./chunk-GSWLJLRT.js";
+import {
+  VDefaultsProvider
+} from "./chunk-EL5M5IWV.js";
+import "./chunk-2EAVJR66.js";
+import {
+  VBtnGroup
+} from "./chunk-5LUMSYQB.js";
+import {
+  makeElevationProps,
+  useElevation
+} from "./chunk-ELZPCHRC.js";
+import {
+  genOverlays,
+  makeVariantProps,
+  useVariant
+} from "./chunk-PHWU6B2Z.js";
+import {
+  makeBorderProps,
+  useBorder
+} from "./chunk-KZL7KHKC.js";
+import {
+  makeRoundedProps,
+  useRounded
+} from "./chunk-VXAYSNMO.js";
+import {
+  makeDensityProps,
+  useDensity
+} from "./chunk-7KKGZLDQ.js";
+import {
+  makeTagProps
+} from "./chunk-NE4ZOCUR.js";
+import {
+  Touch,
+  VTooltip,
+  touch_default
+} from "./chunk-RUCSFBQ5.js";
+import {
+  VOverlay,
+  makeLazyProps,
+  makeVOverlayProps,
+  useHydration,
+  useLazy
+} from "./chunk-J6YDRVIZ.js";
+import {
+  makeDelayProps,
+  useDelay,
+  useScopeId
+} from "./chunk-AKHOPZT2.js";
+import {
+  intersect_default
+} from "./chunk-YFA325IW.js";
 import {
   MaybeTransition,
   makeTransitionProps
-} from "./chunk-INK4XGCI.js";
+} from "./chunk-7WV75GQW.js";
+import {
+  Ripple
+} from "./chunk-HG2EN5AO.js";
+import {
+  makeRouterProps,
+  useLink
+} from "./chunk-X4EDJJL6.js";
+import {
+  makeDimensionProps,
+  useDimension
+} from "./chunk-KBKAXBT7.js";
+import {
+  useBackgroundColor,
+  useTextColor
+} from "./chunk-22QRPJEJ.js";
+import {
+  VForm
+} from "./chunk-HFFN75QZ.js";
+import {
+  useForm
+} from "./chunk-O4QRBAMC.js";
+import {
+  forwardRefs
+} from "./chunk-U5743ICF.js";
+import "./chunk-5TB2DMNK.js";
+import "./chunk-VDWLELRN.js";
+import "./chunk-WWFMKSTB.js";
+import {
+  VuetifyLayoutKey,
+  createLayout,
+  makeLayoutItemProps,
+  makeLayoutProps,
+  useLayout,
+  useLayoutItem
+} from "./chunk-A3NQ477W.js";
+import {
+  useResizeObserver
+} from "./chunk-3AXCWAVL.js";
+import {
+  IconValue,
+  VClassIcon,
+  VComponentIcon,
+  VLigatureIcon,
+  VSvgIcon
+} from "./chunk-YMX75DDC.js";
+import {
+  makeDisplayProps,
+  useDisplay
+} from "./chunk-LSCPAXVH.js";
 import {
   provideLocale,
   useLocale,
   useRtl
-} from "./chunk-54G4UI5X.js";
-import {
-  useProxiedModel,
-  useToggleScope
-} from "./chunk-NDYT6ZZQ.js";
-import {
-  makeDimensionProps,
-  useDimension
-} from "./chunk-4GCBXI6H.js";
-import {
-  VDivider
-} from "./chunk-5JWM6JOS.js";
-import {
-  useBackgroundColor,
-  useTextColor
-} from "./chunk-DGBWZ2PX.js";
+} from "./chunk-CTAOLQID.js";
 import {
   makeThemeProps,
   provideTheme,
   useTheme
-} from "./chunk-J2EN7K23.js";
+} from "./chunk-PHPTPMQS.js";
+import {
+  useProxiedModel,
+  useToggleScope
+} from "./chunk-5K4BOYI5.js";
 import {
   EventProp,
   IN_BROWSER,
@@ -341,7 +344,7 @@ import {
   standardEasing,
   useRender,
   wrapInArray
-} from "./chunk-XUWLGWIC.js";
+} from "./chunk-PEHW3TFN.js";
 import {
   Fragment,
   capitalize,
@@ -6880,64 +6883,6 @@ var VFooter = genericComponent()({
       }, props.style]
     }, slots));
     return {};
-  }
-});
-
-// node_modules/vuetify/lib/components/VForm/VForm.js
-var makeVFormProps = propsFactory({
-  ...makeComponentProps(),
-  ...makeFormProps()
-}, "VForm");
-var VForm = genericComponent()({
-  name: "VForm",
-  props: makeVFormProps(),
-  emits: {
-    "update:modelValue": (val) => true,
-    submit: (e) => true
-  },
-  setup(props, _ref) {
-    let {
-      slots,
-      emit
-    } = _ref;
-    const form = createForm(props);
-    const formRef = ref();
-    function onReset(e) {
-      e.preventDefault();
-      form.reset();
-    }
-    function onSubmit(_e) {
-      const e = _e;
-      const ready = form.validate();
-      e.then = ready.then.bind(ready);
-      e.catch = ready.catch.bind(ready);
-      e.finally = ready.finally.bind(ready);
-      emit("submit", e);
-      if (!e.defaultPrevented) {
-        ready.then((_ref2) => {
-          var _a;
-          let {
-            valid
-          } = _ref2;
-          if (valid) {
-            (_a = formRef.value) == null ? void 0 : _a.submit();
-          }
-        });
-      }
-      e.preventDefault();
-    }
-    useRender(() => {
-      var _a;
-      return createVNode("form", {
-        "ref": formRef,
-        "class": ["v-form", props.class],
-        "style": props.style,
-        "novalidate": true,
-        "onReset": onReset,
-        "onSubmit": onSubmit
-      }, [(_a = slots.default) == null ? void 0 : _a.call(slots, form)]);
-    });
-    return forwardRefs(form, formRef);
   }
 });
 

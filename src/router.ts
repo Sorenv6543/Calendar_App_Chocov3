@@ -40,8 +40,8 @@ const routes: RouteRecordRaw[] = [
     component: () => import("./components/NavigationBar.vue"),
   },
   {
-    path: "/user-profile",
-    name: "user-profile",
+    path: "/userprofile",
+    name: "userprofile",
     component: () => import("./components/Userprofile.vue"),
   },
 ];

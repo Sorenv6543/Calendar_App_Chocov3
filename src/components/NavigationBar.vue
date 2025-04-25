@@ -4,7 +4,7 @@
             :permanent="!isMobile" :temporary="isMobile" :location="location" width="300" class="calendar-sidebar"
             rounded="lg" elevation="4">
             <!-- User Profile Section -->
-            <div class="user-profile pa-3">
+            <div class="userprofile pa-3">
                 <v-avatar size="56" color="primary" class="elevation-2 mb-2" v-if="!rail || isMobile">
                     <span class="text-h6 font-weight-medium">{{ userInitials }}</span>
                 </v-avatar>
@@ -100,7 +100,7 @@
             </div>
             <v-divider class="my-1"></v-divider>
             <v-list density="compact">
-                <v-list-item router-link to="/user-profile">
+                <v-list-item router-link to="/userprofile">
                     <template v-slot:prepend>
                         <v-icon size="small">mdi-account-edit</v-icon>
                     </template>
@@ -162,7 +162,7 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
 import { format } from 'date-fns';
-import { useUserStore } from "../stores/userStore";
+import { useUserStore } from "./stores/userStore";
 import { auth } from "../auth";
 import HouseModal from "./HouseModal.vue";
 
@@ -389,7 +389,7 @@ onMounted(async () => {
     border-right: 1px solid rgba(var(--v-theme-on-surface), 0.08);
 }
 
-.user-profile {
+.userprofile {
     display: flex;
     flex-direction: column;
     align-items: center;

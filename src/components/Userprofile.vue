@@ -86,7 +86,7 @@ function cancelEdit() {
 function goBack() {
     router.push('/home');
 }
-On
+
 </script>
 
 <template>

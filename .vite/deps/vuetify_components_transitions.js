@@ -15,8 +15,8 @@ import {
   VSlideXTransition,
   VSlideYReverseTransition,
   VSlideYTransition
-} from "./chunk-DLUJWSKP.js";
-import "./chunk-XUWLGWIC.js";
+} from "./chunk-3CIWCU3C.js";
+import "./chunk-PEHW3TFN.js";
 import "./chunk-IJV5NOMV.js";
 import "./chunk-JVWSFFO4.js";
 export {
