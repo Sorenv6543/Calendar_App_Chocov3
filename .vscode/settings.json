@@ -63,5 +63,19 @@
   "editor.snippetSuggestions": "inline",
   "editor.acceptSuggestionOnEnter": "on",
   "editor.acceptSuggestionOnCommitCharacter": true,
-  "volar.takeOverMode.enabled": false
+  "volar.takeOverMode.enabled": false,
+  "jest.autoRun": "off",
+  "jest.jestCommandLine": "npx vitest",
+  "jest.testExplorer": {
+    "enabled": true,
+    "showClassicStatus": true
+  },
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": true
+  },
+  "vitest.commandLine": "npx vitest",
+  "vitest.enable": true,
+  "vitest.showFailMessages": true
 }

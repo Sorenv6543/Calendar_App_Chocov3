@@ -85,7 +85,7 @@
           @houseAdded="handleHouseAdded" />
       </div>
 
-      <v-divider class="my-1"></v-divider>
+
 
       <!-- View Options -->
       <div class="view-options pa-2" v-if="!rail || isMobile">
@@ -96,10 +96,28 @@
           </v-btn>
         </v-btn-group>
       </div>
-
+      <v-divider class="my-1"></v-divider>
+      <v-list density="compact">
+        <v-list-item router-link to="/user-profile">
+          <template v-slot:prepend>
+            <v-icon size="small">mdi-account-edit</v-icon>
+            
+              </template>
+              <v-list-item-title>Profile Settings</v-list-item-title>
+            </v-list-item>
+            <v-divider class="my-1"></v-divider>
+            <v-list-item @click="userStore.logout">
+              <template v-slot:prepend>
+                <v-icon size="small">mdi-logout</v-icon>
+              </template>
+              <v-list-item-title>Logout</v-list-item-title>
+            </v-list-item>
+          </v-list>
+      <v-divider class="my-1"></v-divider>
+      
       <template v-slot:append>
         <div class="pa-2">
-          <v-btn v-if="!isMobile" block variant="tonal" @click="rail = !rail"
+          <v-btn v-if="!isMobile" block variant="tonal" @click="rail = rail"
             :prepend-icon="rail ? 'mdi-chevron-right' : 'mdi-chevron-left'">
             {{ rail ? '' : 'Collapse' }}
           </v-btn>
@@ -109,6 +127,9 @@
         </div>
       </template>
     </v-navigation-drawer>
+
+
+
 
     <!-- Confirmation Dialog for Delete -->
     <v-dialog v-model="confirmDeleteDialog" max-width="400px" class="delete-dialog">

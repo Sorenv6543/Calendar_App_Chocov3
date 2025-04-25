@@ -83,7 +83,7 @@ onBeforeUnmount(() => {
     <div class="home-container">
       <Sidebar :class="{ 'show': showSidebar, 'mobile-view': isMobileView }" :persistent="sidebarPersistent"
         @toggle-persistent="toggleSidebarPersistent" @add-house="handleAddHouse" @create-event="handleCreateEvent"
-        @change-view="handleViewChange" />
+        @logout="userStore.logout" @change-view="handleViewChange" />
 
       <div class="main-content" :class="{ 'sidebar-visible': showSidebar }">
         <FullCalendar :user-id="userStore.userData.id" :view="calendarView" />

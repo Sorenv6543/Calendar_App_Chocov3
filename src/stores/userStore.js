@@ -49,11 +49,11 @@ export const useUserStore = defineStore("user", {
           });
         } else {
           this.houses = [];
-          console.warn("Houses property not found or not an array.");
+          
         }
       } catch (err) {
         this.error = "Failed to load user data: " + err.message;
-        console.error("Error fetching user data:", err);
+      
         this.houses = [];
       } finally {
         this.isLoading = false;
@@ -85,11 +85,10 @@ export const useUserStore = defineStore("user", {
           houseId: this.generateHouseId(10),
           address: newHouse.address,
           color: newHouse.color || "#66b8ca",
-          contactnumber: newHouse.contactnumber || "",
+          contactnumber: contactnumber || "",
           selected: true
         };
         
-        console.log("Creating new house:", newHouseData);
 
         // Update Firestore
         const userDocRef = doc(db, "users", this.userData.id);
@@ -115,7 +114,6 @@ export const useUserStore = defineStore("user", {
       try {
         if (!this.userData?.id) throw new Error("No user is logged in.");
         
-        console.log("Deleting house:", house);
         
         // Find the exact house to delete by houseId
         const houseToDelete = this.userData.houses.find(h => h.houseId === house.houseId);
@@ -132,7 +130,6 @@ export const useUserStore = defineStore("user", {
         this.userData.houses = this.userData.houses.filter(h => h.houseId !== house.houseId);
         this.houses = this.houses.filter(h => h.houseId !== house.houseId);
         
-        console.log("House deleted successfully, remaining houses:", this.houses.length);
         
         return true;
       } catch (err) {

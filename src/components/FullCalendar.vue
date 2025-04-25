@@ -652,7 +652,8 @@ async function handleEventDrop(eventDropInfo) {
 }
 
 :deep(.fc-daygrid-event-harness) {
-  /* Keep only color-related styling */
+  /* Add color-related styling if needed, or remove this ruleset */
+  color: inherit; /* Example placeholder */
 }
 
 :deep(.fc-event-main) {
