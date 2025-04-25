@@ -8,7 +8,7 @@
   "editor.inlineSuggest.enabled": true,
   "files.autoSave": "afterDelay",
   "files.autoSaveDelay": 1000,
-  "scm.diffDecorationsGutterVisibility": "none",
+  "scm.diffDecorationsGutterVisibility": "hover",
   "workbench.editor.enablePreview": true,
   "workbench.editor.closeOnFileDelete": true,
   "workbench.editor.enablePreviewFromCodeNavigation": true,

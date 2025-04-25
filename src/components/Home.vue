@@ -1,23 +1,22 @@
 <!--Script---------->
 
-<script setup>
-
-import { ref, onMounted, onBeforeUnmount } from 'vue';
-import { useRouter } from 'vue-router';
-import { useUserStore } from '../stores/userStore';
-import Sidebar from './Sidebar.vue';
-import FullCalendar from './FullCalendar.vue';
-import HouseModal from './HouseModal.vue';
-import EventModal from './EventModal.vue';
+<script setup lang="ts">
+import { ref, onMounted, onBeforeUnmount } from "vue";
+import { useRouter } from "vue-router";
+import { useUserStore } from "../stores/userStore";
+import NavigationBar from "./NavigationBar.vue";
+import FullCalendar from "./FullCalendar.vue";
+import HouseModal from "./HouseModal.vue";
+import EventModal from "./EventModal.vue";
 
 const router = useRouter();
 const userStore = useUserStore();
 const showSidebar = ref(false);
 const isMobileView = ref(window.innerWidth <= 768);
-const sidebarPersistent = ref(false);
+const sidebarPersistent = ref(true);
 const showHouseModal = ref(false);
 const showEventModal = ref(false);
-const calendarView = ref('month');
+const calendarView = ref("month");
 
 const toggleSidebar = () => {
   showSidebar.value = !showSidebar.value;
@@ -68,11 +67,11 @@ const handleResize = () => {
 
 onMounted(() => {
   userStore.initAuthListener();
-  window.addEventListener('resize', handleResize);
+  window.addEventListener("resize", handleResize);
 });
 
 onBeforeUnmount(() => {
-  window.removeEventListener('resize', handleResize);
+  window.removeEventListener("resize", handleResize);
 });
 </script>
 
@@ -81,7 +80,7 @@ onBeforeUnmount(() => {
 <template>
   <div v-if="userStore.userData" class="app-background">
     <div class="home-container">
-      <Sidebar :class="{ 'show': showSidebar, 'mobile-view': isMobileView }" :persistent="sidebarPersistent"
+      <NavigationBar :class="{ show: showSidebar, 'mobile-view': isMobileView }" :persistent="sidebarPersistent"
         @toggle-persistent="toggleSidebarPersistent" @add-house="handleAddHouse" @create-event="handleCreateEvent"
         @logout="userStore.logout" @change-view="handleViewChange" />
 
@@ -106,8 +105,6 @@ onBeforeUnmount(() => {
 <!--Style----------->
 <style scoped>
 .app-background {
-  background-color: #e0e0e4;
-  /* Even darker background */
   min-height: 100vh;
   width: 100%;
 }
@@ -118,7 +115,6 @@ onBeforeUnmount(() => {
   width: 100%;
   position: relative;
 
-  /* Lower content by 15px */
   background-color: #b7bfd5;
 }
 
@@ -131,7 +127,6 @@ onBeforeUnmount(() => {
   will-change: transform;
 }
 
-/* When sidebar is visible, transform main content instead of using margin */
 .main-content.sidebar-visible {
   transform: translateX(310px);
 }

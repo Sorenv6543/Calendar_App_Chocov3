@@ -4,51 +4,46 @@ import { createRouter, createWebHistory, RouteRecordRaw } from "vue-router";
 
 // Use lazy loading for components to improve performance
 const routes: RouteRecordRaw[] = [
-  { 
-    path: "/", 
+  {
+    path: "/",
     name: "login",
-    component: () => import("./components/Login.vue") 
+    component: () => import("./components/Login.vue"),
   },
-  { 
-    path: "/login", 
+  {
+    path: "/login",
     name: "login-direct",
-    component: () => import("./components/Login.vue") 
+    component: () => import("./components/Login.vue"),
   },
-  { 
-    path: "/register", 
+  {
+    path: "/register",
     name: "register",
-    component: () => import("./components/Register.vue") 
+    component: () => import("./components/Register.vue"),
   },
-  { 
-    path: "/home", 
+  {
+    path: "/home",
     name: "home",
-    component: () => import("./components/Home.vue") 
+    component: () => import("./components/Home.vue"),
   },
-  { 
-    path: "/playground", 
+  {
+    path: "/playground",
     name: "playground",
-    component: () => import("./components/Playground.vue") 
+    component: () => import("./components/Playground.vue"),
   },
-  { 
-    path: "/playground2", 
+  {
+    path: "/playground2",
     name: "playground2",
-    component: () => import("./components/Playground2.vue") 
+    component: () => import("./components/Playground2.vue"),
   },
-  { 
-    path: "/sidebar", 
+  {
+    path: "/sidebar",
     name: "sidebar",
-    component: () => import("./components/Sidebar.vue") 
+    component: () => import("./components/NavigationBar.vue"),
   },
-  { 
-    path: "/user-profile", 
-    name: "user-profile",
-    component: () => import("./components/Userprofile.vue") 
-    },
   {
     path: "/user-profile",
     name: "user-profile",
-    component: () => import("./components/Userprofile.vue")
-  }
+    component: () => import("./components/Userprofile.vue"),
+  },
 ];
 
 const router = createRouter({

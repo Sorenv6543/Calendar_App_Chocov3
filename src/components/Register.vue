@@ -49,7 +49,7 @@
               Already have an account? Login
             </router-link>
             <button type="submit" :disabled="isLoading || !isFormValid" class="create-btn">
-              <v-icon left v-if="!isLoading">mdi-check</v-icon>
+              <v-icon start v-if="!isLoading">mdi-check</v-icon>
               <span v-if="isLoading">Registering...</span>
               <span v-else>Register</span>
             </button>

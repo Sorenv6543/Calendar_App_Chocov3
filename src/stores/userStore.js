@@ -85,7 +85,6 @@ export const useUserStore = defineStore("user", {
           houseId: this.generateHouseId(10),
           address: newHouse.address,
           color: newHouse.color || "#66b8ca",
-          contactnumber: contactnumber || "",
           selected: true
         };
         

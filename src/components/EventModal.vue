@@ -23,7 +23,7 @@
                   <span>{{ selectedHouse.address }}</span>
                 </div>
                 <span v-else class="placeholder-text">{{ props.event ? "No house associated" : "Click to select a house"
-                  }}</span>
+                }}</span>
               </div>
               <v-icon v-if="!props.event" color="primary">mdi-chevron-down</v-icon>
             </div>
@@ -44,8 +44,8 @@
         <div class="date-range-container">
           <div class="input-group">
             <div class="d-flex align-center mb-1">
-              
-              <span class="ml-2 input-label text-medium-emphasis"  >Check-In</span>
+
+              <span class="ml-2 input-label text-medium-emphasis">Check-In</span>
             </div>
 
             <v-menu v-model="startDateMenu" :close-on-content-click="false" :nudge-right="40"
@@ -62,7 +62,7 @@
 
           <div class="input-group">
             <div class="d-flex align-center mb-1">
-             
+
               <span class="ml-2 input-label">Check-Out</span>
             </div>
 
@@ -92,7 +92,7 @@
 
           <div v-if="turn" class="turn-details mt-2">
             <div class="d-flex align-center mb-1">
-          
+
               <span class="ml-2 input-label">Turn Date</span>
             </div>
 
@@ -552,11 +552,16 @@ const saveEvent = () => {
     }
   }
 
+  // Add one day to end date to make it exclusive (required by FullCalendar)
+  const endDate = new Date(eventEndDate.value);
+  endDate.setDate(endDate.getDate() + 1);
+  const exclusiveEndDate = endDate.toISOString().split('T')[0];
+
   // Create event object
   const eventData = {
     title: selectedHouse.value.address,
     start: `${eventStartDate.value}T00:00:00`,
-    end: `${eventEndDate.value}T23:59:59`,
+    end: `${exclusiveEndDate}T00:00:00`, // Use exclusive end date for proper multi-day rendering
     allDay: true,
     address: selectedHouse.value.address,
     extendedProps: {
