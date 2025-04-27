@@ -1,0 +1,1 @@
+export { default } from "C:/Users/Soren/Desktop/Sites/Calendar_App_Chocov3/REFACTORED_CODEBASE/node_modules/@nuxt/image/dist/runtime/components/NuxtImg.vue"

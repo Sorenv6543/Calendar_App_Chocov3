@@ -1,0 +1,1 @@
+export { default } from "file:///C:/Users/Soren/Desktop/Sites/Calendar_App_Chocov3/REFACTORED_CODEBASE/backup_20250425_222038/node_modules/@nuxt/vite-builder/dist/runtime/client.manifest.mjs"

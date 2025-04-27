@@ -1,0 +1,38 @@
+{
+  "welcome": "Bienvenido",
+  "calendar": {
+    "title": "Calendario",
+    "events": "Eventos",
+    "settings": "Configuración",
+    "newEvent": "Nuevo Evento",
+    "editEvent": "Editar Evento",
+    "deleteEvent": "Eliminar Evento",
+    "noEvents": "No hay eventos programados",
+    "allDay": "Todo el día",
+    "time": "Hora",
+    "title": "Título",
+    "description": "Descripción",
+    "location": "Ubicación",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "confirmDelete": "¿Estás seguro de que quieres eliminar este evento?"
+  },
+  "auth": {
+    "login": "Iniciar sesión",
+    "logout": "Cerrar sesión",
+    "register": "Registrarse",
+    "email": "Correo electrónico",
+    "password": "Contraseña",
+    "confirmPassword": "Confirmar Contraseña",
+    "forgotPassword": "¿Olvidaste tu contraseña?",
+    "resetPassword": "Restablecer Contraseña"
+  },
+  "common": {
+    "loading": "Cargando...",
+    "error": "Ocurrió un error",
+    "success": "Éxito",
+    "required": "Requerido",
+    "optional": "Opcional"
+  }
+} 
