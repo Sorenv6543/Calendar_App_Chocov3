@@ -8,9 +8,17 @@ import vueDevTools from 'vite-plugin-vue-devtools'
 export default defineConfig(({ mode }) => ({
   base: "/",  
   plugins: [
+    vueDevTools({
+      enabled: true,
+      trace: true,
+
+
+      traceLimit: 1000,
+      traceAll: true,
+      
+    }), 
     vue(),
-    vueDevTools(),
-    vuetify(),
+    vuetify(),  
   ],
   resolve: {
     alias: {
@@ -24,15 +32,11 @@ export default defineConfig(({ mode }) => ({
     host: false, // Expose to network,
     open: true, // Auto-open browser on server start
     fs: {
-      strict: true, // Restrict serving files outside of root directory
+      strict: false, // Restrict serving files outside of root directory
     },
   },
 
-  // Optimize dependencies for faster startup
-  optimizeDeps: {
-    include: ['vue', 'vue-router', 'pinia', 'vuetify', 'fullcalendar'], // Add your frequently used dependencies
-    exclude: [], // Dependencies that should not be pre-bundled
-  },
+
 
   // esbuild transformation options
   esbuild: {
@@ -45,6 +49,7 @@ export default defineConfig(({ mode }) => ({
   // Sourcemap generation in dev mode
   build: {
     sourcemap: mode === 'development',
+
     // Splitting chunks for better cache usage
     rollupOptions: {
       output: {

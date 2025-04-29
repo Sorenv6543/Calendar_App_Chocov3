@@ -1,7 +1,7 @@
 import { doc, onSnapshot, updateDoc, arrayRemove } from "firebase/firestore";
 import { db } from "./firebaseConfig";
 import { auth } from "./auth";
-
+import { useRouter } from "vue-router";
 // Define interfaces
 interface UserData {
   id: string;
@@ -20,7 +20,7 @@ interface House {
 }
 
 interface StoreState {
-  userData: UserData | null;
+  userData: UserData | null;      
   houses?: House[];
   isLoading: boolean;
   error: string | null;

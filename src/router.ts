@@ -44,6 +44,11 @@ const routes: RouteRecordRaw[] = [
     name: "userprofile",
     component: () => import("./components/Userprofile.vue"),
   },
+  {
+    path: "/vueflow",
+    name: "vueflow",
+    component: () => import("./components/Vueflow.vue"),
+  }
 ];
 
 const router = createRouter({
