@@ -69,5 +69,11 @@ node_modules/
 .dataconnect
 
 #vite
-.vite
+.vite/**/*
+
+#vite
+.vite/**/*
+
+.vite/deps/
+
 
