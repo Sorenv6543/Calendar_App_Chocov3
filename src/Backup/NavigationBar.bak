@@ -22,10 +22,7 @@
 
             <!-- Calendar Controls -->
             <div class="calendar-controls pa-2" v-if="!rail || isMobile">
-                <v-btn block color="primary" prepend-icon="mdi-plus" class="mb-2 create-event-btn" elevation="1"
-                    @click="createEvent">
-                    Create Event
-                </v-btn>
+
 
                 <v-menu v-model="dateMenu" :close-on-content-click="false" location="bottom"
                     transition="scale-transition">
@@ -40,9 +37,7 @@
             </div>
 
             <div class="calendar-controls-rail pa-2" v-else>
-                <v-btn icon color="primary" size="small" class="mb-2" @click="createEvent">
-                    <v-icon>mdi-plus</v-icon>
-                </v-btn>
+
 
                 <v-btn icon variant="outlined" size="small" class="mb-2" @click="dateMenu = true">
                     <v-icon>mdi-calendar</v-icon>
@@ -160,7 +155,7 @@
 import { ref, computed, onMounted, watch } from 'vue';
 import { format } from 'date-fns';
 import { useUserStore } from '../stores/userStore.ts';
-import { auth } from "../auth";
+import { auth } from "../auth.js";
 
 // Props
 const props = defineProps({
@@ -178,10 +173,10 @@ const props = defineProps({
 const userStore = useUserStore();
 
 // Emits
-const emit = defineEmits(['create-event', 'add-house', 'remove-house', 'toggle-house', 'change-view', 'change-date', 'toggle-persistent']);
+const emit = defineEmits(['add-house', 'remove-house', 'toggle-house', 'change-view', 'change-date', 'toggle-persistent']);
 
 // State
-const drawer = ref(true);
+const drawer = ref(false);
 const rail = ref(false);
 const isMobile = ref(false);
 const dateMenu = ref(false);
@@ -260,9 +255,7 @@ const handleMouseLeave = () => {
     }
 };
 
-const createEvent = () => {
-    emit('create-event');
-};
+
 
 /**
  * EVENT EMISSION PATTERN
@@ -388,13 +381,7 @@ onMounted(async () => {
     opacity: 1;
 }
 
-.create-event-btn {
-    transition: transform 0.2s ease;
-}
 
-.create-event-btn:hover {
-    transform: translateY(-2px);
-}
 
 .date-picker-btn {
     transition: background-color 0.2s ease;

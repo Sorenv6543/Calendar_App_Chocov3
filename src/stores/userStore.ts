@@ -17,7 +17,6 @@ interface UserData {
   id: string;
   email: string;
   fullName: string;
-  houses: House[];
 }
 
 // Define interface for House
@@ -81,20 +80,7 @@ export const useUserStore = defineStore("user", {
       this.isLoading = true;
       this.error = null;
       try {
-        const unsubscribe = await fetchUserData(currentUser, this);
-        this.unsubscribeUser = unsubscribe;
-
-        if (this.userData === null) {
-          // We don't need to set this.houses as it's not used for rendering
-        } else if (this.userData && Array.isArray(this.userData.houses)) {
-          // Sort houses by address for consistent display
-          this.userData.houses.sort((a, b) => {
-            if (a.address && b.address) {
-              return a.address.localeCompare(b.address);
-            }
-            return 0;
-          });
-        }
+        this.unsubscribeUser = await fetchUserData(currentUser, this);
       } catch (err: any) {
         this.error = "Failed to load user data: " + err.message;
       } finally {
@@ -271,14 +257,17 @@ export const useUserStore = defineStore("user", {
 
     async logout() {
       try {
-        if (this.unsubscribeUser) this.unsubscribeUser();
+        if (this.unsubscribeUser) {
+          this.unsubscribeUser();
+          this.unsubscribeUser = null;
+        }
+        
         await logoutUser();
         this.userData = null;
         this.selectedHouse = null;
         this.selectedHouseId = null;
-        this.error = null;
-      } catch (err) {
-        this.error = "Failed to logout.";
+      } catch (err: any) {
+        this.error = "Failed to log out: " + err.message;
       }
     },
   },

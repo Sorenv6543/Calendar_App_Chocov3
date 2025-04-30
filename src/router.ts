@@ -37,7 +37,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: "/sidebar",
     name: "sidebar",
-    component: () => import("./components/NavigationBar.vue"),
+    component: () => import("./components/NavigationBar.bak"),
   },
   {
     path: "/userprofile",
