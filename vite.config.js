@@ -2,16 +2,12 @@ import { defineConfig } from "vite";
 import vue from "@vitejs/plugin-vue";
 import path from "path";
 import vuetify from "vite-plugin-vuetify";
-import vueDevTools from 'vite-plugin-vue-devtools'
+import vueDevTools from "vite-plugin-vue-devtools";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
-  base: "/",  
-  plugins: [
-    vue(),
-    vueDevTools(),
-    vuetify(),
-  ],
+  base: "/",
+  plugins: [vue(), vueDevTools(), vuetify()],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "src"),
@@ -27,33 +23,30 @@ export default defineConfig(({ mode }) => ({
       strict: true, // Restrict serving files outside of root directory
     },
   },
-
-  // Optimize dependencies for faster startup
+  //optimizeDeps
   optimizeDeps: {
-    include: ['vue', 'vue-router', 'pinia', 'vuetify', 'fullcalendar'], // Add your frequently used dependencies
-    exclude: [], // Dependencies that should not be pre-bundled
+    include: ["vuetify", "vue", "vue-router", "pinia", "fullcalendar"],
+    exclude: [],
   },
-
-  // esbuild transformation options
+  //esbuild transformation options
   esbuild: {
-    target: 'esnext'
+    target: "esnext",
   },
 
   // Cache settings for dev mode
-  cacheDir: '.vite',
-  
-  // Sourcemap generation in dev mode
-  build: {
-    sourcemap: mode === 'development',
-    // Splitting chunks for better cache usage
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          'vue-vendor': ['vue', 'vue-router', 'pinia'],
-          'ui-vendor': ['vuetify']
-        }
-      }
-    }
-  }
-}))
+  cacheDir: ".vite",
 
+  // Sourcemap generation in dev mode
+  // build: {
+  //   sourcemap: mode === 'development',
+  // Splitting chunks for better cache usage
+  //   rollupOptions: {
+  //     output: {
+  //       manualChunks: {
+  //         'vue-vendor': ['vue', 'vue-router', 'pinia'],
+  //         'ui-vendor': ['vuetify']
+  //       }
+  //     }
+  //   }
+  // }
+}));

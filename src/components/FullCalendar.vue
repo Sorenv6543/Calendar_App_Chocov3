@@ -15,6 +15,14 @@ import debounce from 'lodash/debounce';
 import { onMounted, ref, onBeforeUnmount, watch, computed } from "vue";
 import { Event } from "../stores/eventStore";
 
+
+// Interface for EventModalData
+interface EventModalData {
+  startDate: string;
+  endDate: string;
+  event: Event | null;
+}
+
 // Define emits
 const emit = defineEmits([
     'open-event-modal',

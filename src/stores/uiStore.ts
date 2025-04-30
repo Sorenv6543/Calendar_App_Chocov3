@@ -32,23 +32,17 @@ export const useUIStore = defineStore("ui", {
       this.showHouseModal = false;
     },
     
-    openEventModal(data?: { event?: any, startDate?: string, endDate?: string }) {
-      if (data) {
-        this.eventModalData.event = data.event || null;
-        this.eventModalData.startDate = data.startDate || "";
-        this.eventModalData.endDate = data.endDate || "";
-      }
-      this.showEventModal = true;
-    },
-    
-    closeEventModal() {
+   closeEventModal() {
       this.showEventModal = false;
-      // Reset modal data when closing
       this.eventModalData = {
         event: null,
         startDate: "",
-        endDate: "",
+        endDate: ""
       };
+    },
+    openEventModal(data) {
+      this.eventModalData = data;
+      this.showEventModal = true;
     },
     
     // Calendar view control

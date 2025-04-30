@@ -25,25 +25,11 @@ const routes: RouteRecordRaw[] = [
     component: () => import("./components/Home.vue"),
   },
   {
-    path: "/playground",
-    name: "playground",
-    component: () => import("./components/Playground.vue"),
-  },
-  {
-    path: "/playground2",
-    name: "playground2",
-    component: () => import("./components/Playground2.vue"),
-  },
-  {
-    path: "/sidebar",
-    name: "sidebar",
-    component: () => import("./components/NavigationBar.bak"),
-  },
-  {
     path: "/userprofile",
     name: "userprofile",
     component: () => import("./components/Userprofile.vue"),
   },
+
 ];
 
 const router = createRouter({

@@ -256,19 +256,23 @@
 </template>
 
 <script setup>
-import { defineProps, defineEmits, computed, onMounted, onBeforeUnmount } from "vue";
+import { defineProps, defineEmits, computed, onMounted, onBeforeUnmount, nextTick, watch } from "vue";
 import TimePicker from "./TimePicker.vue";
 import { useEventForm } from "../composables/useEventForm";
+import { useUIStore } from "../stores/uiStore";
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
   event: { type: Object, default: null },
   houses: { type: Array, default: () => [] },
   eventStartDate: { type: String, default: "" },
-  eventEndDate: { type: String, default: "" },
+  eventEndDate: { type: String, default: "" }
 });
 
 const emit = defineEmits(["close", "create", "update", "delete", "update:modelValue"]);
+
+// Add the UI store reference
+const uiStore = useUIStore();
 
 // Use the event form composable for consolidated state management
 const {
@@ -300,18 +304,6 @@ const {
   confirmDelete,
   saveEvent,
   deleteEvent,
-
-  // Time management
-  selectedCheckInHour,
-  selectedCheckInMinute,
-  selectedCheckInPeriod,
-  selectedCheckOutHour,
-  selectedCheckOutMinute,
-  selectedCheckOutPeriod,
-  validateHourInput,
-  validateMinuteInput,
-  updateCheckInTime,
-  updateCheckOutTime
 } = useEventForm(props, emit);
 
 // Computed to deduplicate houses
@@ -334,45 +326,34 @@ const uniqueHouses = computed(() => {
   );
 });
 
-// Watch for prop changes
-watch(
-  () => props.modelValue,
-  (val) => {
-    formState.dialog = val;
-
-    // If opening modal for new event (not editing), ensure house dropdown is highlighted
-    if (val && !props.event) {
-      // Use nextTick to wait for DOM to update
-      nextTick(() => {
-        const selectHeader = document.querySelector('.custom-select-header');
-        if (selectHeader) {
-          selectHeader.classList.add('active');
-          // Use CSS animation instead of chained setTimeout
-          selectHeader.classList.add('initial-highlight');
-        }
-      });
-    }
-  },
-  { immediate: true }
-);
-
-// Watch dialog changes to emit update:modelValue events
-watch(
-  () => formState.dialog,
-  (val) => {
-    emit("update:modelValue", val);
-    if (!val) emit("close");
+// Watch for modal visibility changes
+watch(() => props.modelValue, (newValue) => {
+  formState.dialog = newValue;
+  if (newValue && !props.event) {
+    nextTick(() => {
+      const selectHeader = document.querySelector('.custom-select-header');
+      if (selectHeader) {
+        selectHeader.classList.add('active', 'initial-highlight');
+      }
+    });
   }
-);
+}, { immediate: true });
+
+// Watch dialog state changes
+watch(() => formState.dialog, (newValue) => {
+  emit('update:modelValue', newValue);
+  if (!newValue) {
+    emit('close');
+    resetForm();
+  }
+});
 
 // Watch for changes in the start date prop
 watch(
   () => props.eventStartDate,
   (newDate) => {
     if (newDate && !props.event) {
-      // Only update if we're creating a new event (not editing)
       formState.eventStartDate = newDate;
-      // Also set end date to the same date by default
       formState.eventEndDate = newDate;
     }
   },
@@ -384,7 +365,6 @@ watch(
   () => props.eventEndDate,
   (newDate) => {
     if (newDate && !props.event) {
-      // Only update if we're creating a new event (not editing)
       formState.eventEndDate = newDate;
     }
   },
@@ -427,40 +407,30 @@ const loadEventData = (event) => {
   formState.eventnotes = event.extendedProps?.eventnotes || "";
 };
 
-// Close dropdown when clicking outside
+// Handle click outside for dropdown
+const handleClickOutside = (e) => {
+  const container = document.querySelector(".custom-select-container");
+  const dropdown = document.querySelector(".custom-select-dropdown");
+
+  if (
+    formState.showHouseDropdown &&
+    container &&
+    !container.contains(e.target) &&
+    dropdown &&
+    !dropdown.contains(e.target) &&
+    !e.target.classList.contains('house-option')
+  ) {
+    formState.showHouseDropdown = false;
+  }
+};
+
 onMounted(() => {
-  const handleClickOutside = (e) => {
-    const container = document.querySelector(".custom-select-container");
-    const dropdown = document.querySelector(".custom-select-dropdown");
-
-    // Only proceed if dropdown is open and click is outside the container and not on a house option
-    if (
-      formState.showHouseDropdown &&
-      container &&
-      !container.contains(e.target) &&
-      dropdown &&
-      !dropdown.contains(e.target) &&
-      !e.target.classList.contains('house-option')
-    ) {
-      formState.showHouseDropdown = false;
-    }
-  };
-
   document.addEventListener("click", handleClickOutside);
-
-  // Clean up event listener on component unmount
-  onBeforeUnmount(() => {
-    document.removeEventListener("click", handleClickOutside);
-  });
 });
 
-// Generate a colored dot for house selection
-const getHouseColorDot = (item) => {
-  if (!item || !item.color) return "";
-  return `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"><circle cx="12" cy="12" r="10" fill="${encodeURIComponent(
-    item.color
-  )}"/></svg>`;
-};
+onBeforeUnmount(() => {
+  document.removeEventListener("click", handleClickOutside);
+});
 </script>
 
 <style scoped>

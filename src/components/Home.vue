@@ -7,7 +7,7 @@ import { useUserStore } from "../stores/userStore";
 import { useHouseStore } from "../stores/houseStore";
 import { useEventStore } from "../stores/eventStore";
 import { useUIStore } from "../stores/uiStore";
-import FullCalendar from "./FullCalendar";
+import FullCalendar from "./FullCalendar.vue";
 import HouseModal from "./HouseModal.vue";
 import EventModal from "./EventModal.vue";
 

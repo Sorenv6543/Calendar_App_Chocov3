@@ -340,7 +340,7 @@ First, let's create a more organized store structure:
 -             return 0;
 -           });
 -         }
-+         this.unsubscribeUser = await fetchUserData(currentUser, this);
+ +         this.unsubscribeUser = await fetchUserData(currentUser, this);
         } catch (err: any) {
           this.error = "Failed to load user data: " + err.message;
 ```
