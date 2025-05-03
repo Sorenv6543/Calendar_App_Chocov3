@@ -24,6 +24,9 @@ export default defineConfig(
         strict: true, // Restrict serving files outside of root directory
       },
     },
+    // sourcemap generation in dev mode
+    
+
 
     // Optimize dependencies for faster startup
     optimizeDeps: {
@@ -42,6 +45,8 @@ export default defineConfig(
     // Sourcemap generation in dev mode
     build: {
       sourcemap: mode === "development",
+   
+
       // Splitting chunks for better cache usage
       rollupOptions: {
         output: {

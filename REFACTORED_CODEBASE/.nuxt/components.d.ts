@@ -12,7 +12,8 @@ type HydrationStrategies = {
 }
 type LazyComponent<T> = (T & DefineComponent<HydrationStrategies, {}, {}, {}, {}, {}, {}, { hydrated: () => void }>)
 interface _GlobalComponents {
-      'ColorModeButton': typeof import("../components/ColorModeButton.vue")['default']
+      'Calendar': typeof import("../components/Calendar.vue")['default']
+    'ColorModeButton': typeof import("../components/ColorModeButton.vue")['default']
     'EventModal': typeof import("../components/EventModal.vue")['default']
     'FullCalendar': typeof import("../components/FullCalendar.vue")['default']
     'Header': typeof import("../components/Header.vue")['default']
@@ -112,7 +113,8 @@ interface _GlobalComponents {
     'Body': typeof import("../node_modules/nuxt/dist/head/runtime/components")['Body']
     'NuxtIsland': typeof import("../node_modules/nuxt/dist/app/components/nuxt-island")['default']
     'NuxtRouteAnnouncer': IslandComponent<typeof import("../node_modules/nuxt/dist/app/components/server-placeholder")['default']>
-      'LazyColorModeButton': LazyComponent<typeof import("../components/ColorModeButton.vue")['default']>
+      'LazyCalendar': LazyComponent<typeof import("../components/Calendar.vue")['default']>
+    'LazyColorModeButton': LazyComponent<typeof import("../components/ColorModeButton.vue")['default']>
     'LazyEventModal': LazyComponent<typeof import("../components/EventModal.vue")['default']>
     'LazyFullCalendar': LazyComponent<typeof import("../components/FullCalendar.vue")['default']>
     'LazyHeader': LazyComponent<typeof import("../components/Header.vue")['default']>
@@ -218,6 +220,7 @@ declare module 'vue' {
   export interface GlobalComponents extends _GlobalComponents { }
 }
 
+export const Calendar: typeof import("../components/Calendar.vue")['default']
 export const ColorModeButton: typeof import("../components/ColorModeButton.vue")['default']
 export const EventModal: typeof import("../components/EventModal.vue")['default']
 export const FullCalendar: typeof import("../components/FullCalendar.vue")['default']
@@ -318,6 +321,7 @@ export const Html: typeof import("../node_modules/nuxt/dist/head/runtime/compone
 export const Body: typeof import("../node_modules/nuxt/dist/head/runtime/components")['Body']
 export const NuxtIsland: typeof import("../node_modules/nuxt/dist/app/components/nuxt-island")['default']
 export const NuxtRouteAnnouncer: IslandComponent<typeof import("../node_modules/nuxt/dist/app/components/server-placeholder")['default']>
+export const LazyCalendar: LazyComponent<typeof import("../components/Calendar.vue")['default']>
 export const LazyColorModeButton: LazyComponent<typeof import("../components/ColorModeButton.vue")['default']>
 export const LazyEventModal: LazyComponent<typeof import("../components/EventModal.vue")['default']>
 export const LazyFullCalendar: LazyComponent<typeof import("../components/FullCalendar.vue")['default']>

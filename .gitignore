@@ -71,3 +71,5 @@ node_modules/
 #vite
 .vite
 
+# SpecStory explanation file
+.specstory/.what-is-this.md

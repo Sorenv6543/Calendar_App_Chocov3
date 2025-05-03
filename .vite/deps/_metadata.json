@@ -1,151 +1,151 @@
 {
-  "hash": "4cebdaab",
-  "configHash": "6852e028",
-  "lockfileHash": "2e67c5b4",
-  "browserHash": "1936d968",
+  "hash": "53592f84",
+  "configHash": "893f475d",
+  "lockfileHash": "6cf49e4a",
+  "browserHash": "1aa12ef3",
   "optimized": {
     "vue": {
       "src": "../../node_modules/vue/dist/vue.runtime.esm-bundler.js",
       "file": "vue.js",
-      "fileHash": "2d2e2327",
+      "fileHash": "a707d8fd",
       "needsInterop": false
     },
     "vue-router": {
       "src": "../../node_modules/vue-router/dist/vue-router.mjs",
       "file": "vue-router.js",
-      "fileHash": "76fe939b",
+      "fileHash": "6a9e2ba5",
       "needsInterop": false
     },
     "pinia": {
       "src": "../../node_modules/pinia/dist/pinia.mjs",
       "file": "pinia.js",
-      "fileHash": "f3b15889",
+      "fileHash": "1a2f6018",
       "needsInterop": false
     },
     "vuetify": {
       "src": "../../node_modules/vuetify/lib/framework.js",
       "file": "vuetify.js",
-      "fileHash": "d600e873",
+      "fileHash": "83df689a",
       "needsInterop": false
     },
     "@fullcalendar/daygrid": {
       "src": "../../node_modules/@fullcalendar/daygrid/index.js",
       "file": "@fullcalendar_daygrid.js",
-      "fileHash": "3f42cabe",
+      "fileHash": "104937d8",
       "needsInterop": false
     },
     "@fullcalendar/interaction": {
       "src": "../../node_modules/@fullcalendar/interaction/index.js",
       "file": "@fullcalendar_interaction.js",
-      "fileHash": "ef3e5fe9",
+      "fileHash": "580d38b4",
       "needsInterop": false
     },
     "@fullcalendar/timegrid": {
       "src": "../../node_modules/@fullcalendar/timegrid/index.js",
       "file": "@fullcalendar_timegrid.js",
-      "fileHash": "50ea727e",
+      "fileHash": "4cfdb5fd",
       "needsInterop": false
     },
     "@fullcalendar/vue3": {
       "src": "../../node_modules/@fullcalendar/vue3/dist/index.js",
       "file": "@fullcalendar_vue3.js",
-      "fileHash": "a923989d",
+      "fileHash": "f5e1a2ed",
       "needsInterop": false
     },
     "firebase/app": {
       "src": "../../node_modules/firebase/app/dist/esm/index.esm.js",
       "file": "firebase_app.js",
-      "fileHash": "924d5f37",
+      "fileHash": "ad8c1888",
       "needsInterop": false
     },
     "firebase/auth": {
       "src": "../../node_modules/firebase/auth/dist/esm/index.esm.js",
       "file": "firebase_auth.js",
-      "fileHash": "d06ca9de",
+      "fileHash": "e9687755",
       "needsInterop": false
     },
     "firebase/firestore": {
       "src": "../../node_modules/firebase/firestore/dist/esm/index.esm.js",
       "file": "firebase_firestore.js",
-      "fileHash": "01db5962",
+      "fileHash": "7b421b48",
       "needsInterop": false
     },
     "lodash/debounce": {
       "src": "../../node_modules/lodash/debounce.js",
       "file": "lodash_debounce.js",
-      "fileHash": "597087af",
+      "fileHash": "8bacf301",
       "needsInterop": true
     },
     "vuetify/components": {
       "src": "../../node_modules/vuetify/lib/components/index.js",
       "file": "vuetify_components.js",
-      "fileHash": "8261ddd7",
+      "fileHash": "f0352041",
       "needsInterop": false
     },
     "vuetify/directives": {
       "src": "../../node_modules/vuetify/lib/directives/index.js",
       "file": "vuetify_directives.js",
-      "fileHash": "b9efb9aa",
+      "fileHash": "2aca93d6",
       "needsInterop": false
     },
     "vuetify/iconsets/fa": {
       "src": "../../node_modules/vuetify/lib/iconsets/fa.js",
       "file": "vuetify_iconsets_fa.js",
-      "fileHash": "ca5cadbf",
+      "fileHash": "b0513b86",
       "needsInterop": false
     },
     "vuetify/iconsets/mdi": {
       "src": "../../node_modules/vuetify/lib/iconsets/mdi.js",
       "file": "vuetify_iconsets_mdi.js",
-      "fileHash": "971bda92",
+      "fileHash": "08469bdb",
       "needsInterop": false
     },
     "vuetify/components/VApp": {
       "src": "../../node_modules/vuetify/lib/components/VApp/index.js",
       "file": "vuetify_components_VApp.js",
-      "fileHash": "9979103e",
+      "fileHash": "4b8ab8de",
       "needsInterop": false
     },
     "vuetify/components/VMain": {
       "src": "../../node_modules/vuetify/lib/components/VMain/index.js",
       "file": "vuetify_components_VMain.js",
-      "fileHash": "0709d225",
+      "fileHash": "0218cfec",
       "needsInterop": false
     }
   },
   "chunks": {
-    "chunk-5CMO42JT": {
-      "file": "chunk-5CMO42JT.js"
+    "chunk-ANEEROL5": {
+      "file": "chunk-ANEEROL5.js"
     },
-    "chunk-F2EXME73": {
-      "file": "chunk-F2EXME73.js"
+    "chunk-EBBLCLI7": {
+      "file": "chunk-EBBLCLI7.js"
     },
-    "chunk-WO6BZYIR": {
-      "file": "chunk-WO6BZYIR.js"
+    "chunk-SSPJ37UF": {
+      "file": "chunk-SSPJ37UF.js"
     },
-    "chunk-UB5ET4RB": {
-      "file": "chunk-UB5ET4RB.js"
+    "chunk-HL6SBHID": {
+      "file": "chunk-HL6SBHID.js"
     },
-    "chunk-KF7JSFJW": {
-      "file": "chunk-KF7JSFJW.js"
+    "chunk-YMBQ3XKP": {
+      "file": "chunk-YMBQ3XKP.js"
     },
-    "chunk-MU4ZMEAB": {
-      "file": "chunk-MU4ZMEAB.js"
+    "chunk-UHNNK2CZ": {
+      "file": "chunk-UHNNK2CZ.js"
     },
-    "chunk-7GRRHXOQ": {
-      "file": "chunk-7GRRHXOQ.js"
+    "chunk-A3C2GTR2": {
+      "file": "chunk-A3C2GTR2.js"
     },
-    "chunk-6SQO24FJ": {
-      "file": "chunk-6SQO24FJ.js"
+    "chunk-TUV7MICZ": {
+      "file": "chunk-TUV7MICZ.js"
     },
-    "chunk-UAAK7NZW": {
-      "file": "chunk-UAAK7NZW.js"
+    "chunk-H2SUDHGW": {
+      "file": "chunk-H2SUDHGW.js"
     },
-    "chunk-VQS5S42S": {
-      "file": "chunk-VQS5S42S.js"
+    "chunk-3UQY44WI": {
+      "file": "chunk-3UQY44WI.js"
     },
-    "chunk-TIEWGVU7": {
-      "file": "chunk-TIEWGVU7.js"
+    "chunk-TLL5SP34": {
+      "file": "chunk-TLL5SP34.js"
     },
     "chunk-FXC3THDX": {
       "file": "chunk-FXC3THDX.js"
