@@ -6,15 +6,15 @@ import {
   createGoTo,
   useDate,
   useGoTo
-} from "./chunk-MU4ZMEAB.js";
+} from "./chunk-UHNNK2CZ.js";
 import {
   useLayout
-} from "./chunk-7GRRHXOQ.js";
+} from "./chunk-A3C2GTR2.js";
 import {
   DisplaySymbol,
   createDisplay,
   useDisplay
-} from "./chunk-6SQO24FJ.js";
+} from "./chunk-TUV7MICZ.js";
 import {
   LocaleSymbol,
   ThemeSymbol,
@@ -23,11 +23,11 @@ import {
   useLocale,
   useRtl,
   useTheme
-} from "./chunk-UAAK7NZW.js";
+} from "./chunk-H2SUDHGW.js";
 import {
   IconSymbol,
   createIcons
-} from "./chunk-VQS5S42S.js";
+} from "./chunk-3UQY44WI.js";
 import {
   DefaultsSymbol,
   IN_BROWSER,
@@ -35,7 +35,7 @@ import {
   defineComponent,
   mergeDeep,
   useDefaults
-} from "./chunk-TIEWGVU7.js";
+} from "./chunk-TLL5SP34.js";
 import {
   effectScope,
   nextTick,
@@ -142,7 +142,7 @@ function createVuetify() {
     };
   });
 }
-var version = "3.8.1";
+var version = "3.8.3";
 createVuetify.version = version;
 function inject(key) {
   var _a, _b;

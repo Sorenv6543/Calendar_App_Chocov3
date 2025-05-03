@@ -16,7 +16,7 @@ import {
   isIndexedDBAvailable,
   isSafari,
   registerVersion
-} from "./chunk-5CMO42JT.js";
+} from "./chunk-ANEEROL5.js";
 import "./chunk-BUSYA2B4.js";
 
 // node_modules/@firebase/webchannel-wrapper/dist/bloom-blob/esm/bloom_blob_es2018.js
@@ -17847,16 +17847,6 @@ export {
 /*! Bundled license information:
 
 @firebase/webchannel-wrapper/dist/bloom-blob/esm/bloom_blob_es2018.js:
-  (** @license
-  Copyright The Closure Library Authors.
-  SPDX-License-Identifier: Apache-2.0
-  *)
-  (** @license
-  
-   Copyright The Closure Library Authors.
-   SPDX-License-Identifier: Apache-2.0
-  *)
-
 @firebase/webchannel-wrapper/dist/webchannel-blob/esm/webchannel_blob_es2018.js:
   (** @license
   Copyright The Closure Library Authors.

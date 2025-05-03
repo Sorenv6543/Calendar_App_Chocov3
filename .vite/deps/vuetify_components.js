@@ -1,11 +1,11 @@
 import {
   VApp
-} from "./chunk-F2EXME73.js";
+} from "./chunk-EBBLCLI7.js";
 import {
   VMain,
   makeTagProps,
   useSsrBoot
-} from "./chunk-WO6BZYIR.js";
+} from "./chunk-SSPJ37UF.js";
 import {
   MaybeTransition,
   Ripple,
@@ -31,16 +31,15 @@ import {
   useRouter,
   useScopeId,
   useTextColor
-} from "./chunk-UB5ET4RB.js";
+} from "./chunk-HL6SBHID.js";
 import {
   makeDimensionProps,
   useDimension
-} from "./chunk-KF7JSFJW.js";
+} from "./chunk-YMBQ3XKP.js";
 import {
-  getWeek,
   useDate,
   useGoTo
-} from "./chunk-MU4ZMEAB.js";
+} from "./chunk-UHNNK2CZ.js";
 import {
   VuetifyLayoutKey,
   createLayout,
@@ -49,12 +48,12 @@ import {
   useLayout,
   useLayoutItem,
   useResizeObserver
-} from "./chunk-7GRRHXOQ.js";
+} from "./chunk-A3C2GTR2.js";
 import {
   breakpoints,
   makeDisplayProps,
   useDisplay
-} from "./chunk-6SQO24FJ.js";
+} from "./chunk-TUV7MICZ.js";
 import {
   makeThemeProps,
   provideLocale,
@@ -64,7 +63,7 @@ import {
   useRtl,
   useTheme,
   useToggleScope
-} from "./chunk-UAAK7NZW.js";
+} from "./chunk-H2SUDHGW.js";
 import {
   IconValue,
   VClassIcon,
@@ -72,7 +71,7 @@ import {
   VLigatureIcon,
   VSvgIcon,
   useIcon
-} from "./chunk-VQS5S42S.js";
+} from "./chunk-3UQY44WI.js";
 import {
   CircularBuffer,
   EventProp,
@@ -148,7 +147,7 @@ import {
   toPhysical,
   useRender,
   wrapInArray
-} from "./chunk-TIEWGVU7.js";
+} from "./chunk-TLL5SP34.js";
 import {
   Fragment,
   Text,
@@ -184,6 +183,7 @@ import {
   toRaw,
   toRef,
   toRefs,
+  toValue,
   unref,
   useId,
   vModelText,
@@ -410,6 +410,7 @@ function expand_transition_default() {
 var makeVDialogTransitionProps = propsFactory({
   target: [Object, Array]
 }, "v-dialog-transition");
+var saved = /* @__PURE__ */ new WeakMap();
 var VDialogTransition = genericComponent()({
   name: "VDialogTransition",
   props: makeVDialogTransitionProps(),
@@ -427,13 +428,15 @@ var VDialogTransition = genericComponent()({
         await new Promise((resolve) => requestAnimationFrame(resolve));
         await new Promise((resolve) => requestAnimationFrame(resolve));
         el.style.visibility = "";
+        const dimensions = getDimensions(props.target, el);
         const {
           x,
           y,
           sx,
           sy,
           speed
-        } = getDimensions(props.target, el);
+        } = dimensions;
+        saved.set(el, dimensions);
         const animation = animate(el, [{
           transform: `translate(${x}px, ${y}px) scale(${sx}, ${sy})`,
           opacity: 0
@@ -463,13 +466,19 @@ var VDialogTransition = genericComponent()({
       async onLeave(el, done) {
         var _a2;
         await new Promise((resolve) => requestAnimationFrame(resolve));
+        let dimensions;
+        if (!Array.isArray(props.target) && !props.target.offsetParent && saved.has(el)) {
+          dimensions = saved.get(el);
+        } else {
+          dimensions = getDimensions(props.target, el);
+        }
         const {
           x,
           y,
           sx,
           sy,
           speed
-        } = getDimensions(props.target, el);
+        } = dimensions;
         const animation = animate(el, [{}, {
           transform: `translate(${x}px, ${y}px) scale(${sx}, ${sy})`,
           opacity: 0
@@ -734,7 +743,7 @@ var VImg = genericComponent()({
     const {
       backgroundColorClasses,
       backgroundColorStyles
-    } = useBackgroundColor(toRef(props, "color"));
+    } = useBackgroundColor(() => props.color);
     const {
       roundedClasses
     } = useRounded(props);
@@ -842,7 +851,7 @@ var VImg = genericComponent()({
       };
       poll();
     }
-    const containClasses = computed(() => ({
+    const containClasses = toRef(() => ({
       "v-img__img--cover": props.cover,
       "v-img__img--contain": !props.cover
     }));
@@ -975,16 +984,13 @@ var makeBorderProps = propsFactory({
 function useBorder(props) {
   let name = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : getCurrentInstanceName();
   const borderClasses = computed(() => {
-    const border = isRef(props) ? props.value : props.border;
-    const classes = [];
+    const border = props.border;
     if (border === true || border === "") {
-      classes.push(`${name}--border`);
+      return `${name}--border`;
     } else if (typeof border === "string" || border === 0) {
-      for (const value of String(border).split(" ")) {
-        classes.push(`border-${value}`);
-      }
+      return String(border).split(" ").map((v) => `border-${v}`);
     }
-    return classes;
+    return [];
   });
   return {
     borderClasses
@@ -1004,12 +1010,10 @@ var makeElevationProps = propsFactory({
   }
 }, "elevation");
 function useElevation(props) {
-  const elevationClasses = computed(() => {
+  const elevationClasses = toRef(() => {
     const elevation = isRef(props) ? props.value : props.elevation;
-    const classes = [];
-    if (elevation == null) return classes;
-    classes.push(`elevation-${elevation}`);
-    return classes;
+    if (elevation == null) return [];
+    return [`elevation-${elevation}`];
   });
   return {
     elevationClasses
@@ -1060,7 +1064,7 @@ var VToolbar = genericComponent()({
     const {
       backgroundColorClasses,
       backgroundColorStyles
-    } = useBackgroundColor(toRef(props, "color"));
+    } = useBackgroundColor(() => props.color);
     const {
       borderClasses
     } = useBorder(props);
@@ -1311,7 +1315,7 @@ var VAppBar = genericComponent()({
     } = useScroll(props, {
       canScroll
     });
-    const canHide = computed(() => scrollBehavior.value.hide || scrollBehavior.value.fullyHide);
+    const canHide = toRef(() => scrollBehavior.value.hide || scrollBehavior.value.fullyHide);
     const isCollapsed = computed(() => props.collapse || scrollBehavior.value.collapse && (scrollBehavior.value.inverted ? scrollRatio.value > 0 : scrollRatio.value === 0));
     const isFlat = computed(() => props.flat || scrollBehavior.value.fullyHide && !isActive.value || scrollBehavior.value.elevate && (scrollBehavior.value.inverted ? currentScroll.value > 0 : currentScroll.value === 0));
     const opacity = computed(() => scrollBehavior.value.fadeImage ? scrollBehavior.value.inverted ? 1 - scrollRatio.value : scrollRatio.value : void 0);
@@ -1323,7 +1327,7 @@ var VAppBar = genericComponent()({
       if (!canHide.value) return height2 + extensionHeight;
       return currentScroll.value < scrollThreshold.value || scrollBehavior.value.fullyHide ? height2 + extensionHeight : height2;
     });
-    useToggleScope(computed(() => !!props.scrollBehavior), () => {
+    useToggleScope(() => !!props.scrollBehavior, () => {
       watchEffect(() => {
         if (canHide.value) {
           if (scrollBehavior.value.inverted) {
@@ -1344,11 +1348,11 @@ var VAppBar = genericComponent()({
     } = useLayoutItem({
       id: props.name,
       order: computed(() => parseInt(props.order, 10)),
-      position: toRef(props, "location"),
+      position: toRef(() => props.location),
       layoutSize: height,
       elementSize: shallowRef(void 0),
       active: isActive,
-      absolute: toRef(props, "absolute")
+      absolute: toRef(() => props.absolute)
     });
     useRender(() => {
       const toolbarProps = VToolbar.filterProps(props);
@@ -1392,7 +1396,7 @@ var makeDensityProps = propsFactory({
 }, "density");
 function useDensity(props) {
   let name = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : getCurrentInstanceName();
-  const densityClasses = computed(() => {
+  const densityClasses = toRef(() => {
     return `${name}--density-${props.density}`;
   });
   return {
@@ -1421,24 +1425,24 @@ var makeVariantProps = propsFactory({
 }, "variant");
 function useVariant(props) {
   let name = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : getCurrentInstanceName();
-  const variantClasses = computed(() => {
+  const variantClasses = toRef(() => {
     const {
       variant
-    } = unref(props);
+    } = toValue(props);
     return `${name}--variant-${variant}`;
   });
   const {
     colorClasses,
     colorStyles
-  } = useColor(computed(() => {
+  } = useColor(() => {
     const {
       variant,
       color
-    } = unref(props);
+    } = toValue(props);
     return {
       [["elevated", "flat"].includes(variant) ? "background" : "text"]: color
     };
-  }));
+  });
   return {
     colorClasses,
     colorStyles,
@@ -1484,11 +1488,11 @@ var VBtnGroup = genericComponent()({
     provideDefaults({
       VBtn: {
         height: "auto",
-        baseColor: toRef(props, "baseColor"),
-        color: toRef(props, "color"),
-        density: toRef(props, "density"),
+        baseColor: toRef(() => props.baseColor),
+        color: toRef(() => props.color),
+        density: toRef(() => props.density),
         flat: true,
-        variant: toRef(props, "variant")
+        variant: toRef(() => props.variant)
       }
     });
     useRender(() => {
@@ -1532,7 +1536,7 @@ function useGroupItem(props, injectKey) {
     if (!required) return group;
     throw new Error(`[Vuetify] Could not find useGroup injection with symbol ${injectKey.description}`);
   }
-  const value = toRef(props, "value");
+  const value = toRef(() => props.value);
   const disabled = computed(() => !!(group.disabled.value || props.disabled));
   group.register({
     id,
@@ -1665,12 +1669,12 @@ function useGroup(props, injectKey) {
     unregister,
     selected,
     select,
-    disabled: toRef(props, "disabled"),
+    disabled: toRef(() => props.disabled),
     prev: () => step(items.length - 1),
     next: () => step(1),
     isSelected: (id) => selected.value.includes(id),
-    selectedClass: computed(() => props.selectedClass),
-    items: computed(() => items),
+    selectedClass: toRef(() => props.selectedClass),
+    items: toRef(() => items),
     getItemIndex: (value) => getItemIndex(items, value)
   };
   provide(injectKey, state);
@@ -1770,14 +1774,15 @@ var makeSizeProps = propsFactory({
 function useSize(props) {
   let name = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : getCurrentInstanceName();
   return destructComputed(() => {
+    const size = props.size;
     let sizeClasses;
     let sizeStyles;
-    if (includes(predefinedSizes, props.size)) {
-      sizeClasses = `${name}--size-${props.size}`;
-    } else if (props.size) {
+    if (includes(predefinedSizes, size)) {
+      sizeClasses = `${name}--size-${size}`;
+    } else if (size) {
       sizeStyles = {
-        width: convertToUnit(props.size),
-        height: convertToUnit(props.size)
+        width: convertToUnit(size),
+        height: convertToUnit(size)
       };
     }
     return {
@@ -1810,20 +1815,20 @@ var VIcon = genericComponent()({
       attrs,
       slots
     } = _ref;
-    const slotIcon = ref();
+    const slotIcon = shallowRef();
     const {
       themeClasses
     } = useTheme();
     const {
       iconData
-    } = useIcon(computed(() => slotIcon.value || props.icon));
+    } = useIcon(() => slotIcon.value || props.icon);
     const {
       sizeClasses
     } = useSize(props);
     const {
       textColorClasses,
       textColorStyles
-    } = useTextColor(toRef(props, "color"));
+    } = useTextColor(() => props.color);
     useRender(() => {
       var _a2, _b;
       const slotValue = (_a2 = slots.default) == null ? void 0 : _a2.call(slots);
@@ -1933,11 +1938,11 @@ var VProgressCircular = genericComponent()({
     const {
       textColorClasses,
       textColorStyles
-    } = useTextColor(toRef(props, "color"));
+    } = useTextColor(() => props.color);
     const {
       textColorClasses: underlayColorClasses,
       textColorStyles: underlayColorStyles
-    } = useTextColor(toRef(props, "bgColor"));
+    } = useTextColor(() => props.bgColor);
     const {
       intersectionRef,
       isIntersecting
@@ -1946,14 +1951,14 @@ var VProgressCircular = genericComponent()({
       resizeRef,
       contentRect
     } = useResizeObserver();
-    const normalizedValue = computed(() => Math.max(0, Math.min(100, parseFloat(props.modelValue))));
-    const width = computed(() => Number(props.width));
-    const size = computed(() => {
+    const normalizedValue = toRef(() => Math.max(0, Math.min(100, parseFloat(props.modelValue))));
+    const width = toRef(() => Number(props.width));
+    const size = toRef(() => {
       return sizeStyles.value ? Number(props.size) : contentRect.value ? contentRect.value.width : Math.max(width.value, 32);
     });
-    const diameter = computed(() => MAGIC_RADIUS_CONSTANT / (1 - width.value / size.value) * 2);
-    const strokeWidth = computed(() => width.value / size.value * diameter.value);
-    const strokeDashOffset = computed(() => convertToUnit((100 - normalizedValue.value) / 100 * CIRCUMFERENCE));
+    const diameter = toRef(() => MAGIC_RADIUS_CONSTANT / (1 - width.value / size.value) * 2);
+    const strokeWidth = toRef(() => width.value / size.value * diameter.value);
+    const strokeDashOffset = toRef(() => convertToUnit((100 - normalizedValue.value) / 100 * CIRCUMFERENCE));
     watchEffect(() => {
       intersectionRef.value = root.value;
       resizeRef.value = root.value;
@@ -2136,19 +2141,19 @@ var VProgressLinear = genericComponent()({
     const {
       textColorClasses,
       textColorStyles
-    } = useTextColor(props, "color");
+    } = useTextColor(() => props.color);
     const {
       backgroundColorClasses,
       backgroundColorStyles
-    } = useBackgroundColor(computed(() => props.bgColor || props.color));
+    } = useBackgroundColor(() => props.bgColor || props.color);
     const {
       backgroundColorClasses: bufferColorClasses,
       backgroundColorStyles: bufferColorStyles
-    } = useBackgroundColor(computed(() => props.bufferColor || props.bgColor || props.color));
+    } = useBackgroundColor(() => props.bufferColor || props.bgColor || props.color);
     const {
       backgroundColorClasses: barColorClasses,
       backgroundColorStyles: barColorStyles
-    } = useBackgroundColor(props, "color");
+    } = useBackgroundColor(() => props.color);
     const {
       roundedClasses
     } = useRounded(props);
@@ -2253,7 +2258,7 @@ var makeLoaderProps = propsFactory({
 }, "loader");
 function useLoader(props) {
   let name = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : getCurrentInstanceName();
-  const loaderClasses = computed(() => ({
+  const loaderClasses = toRef(() => ({
     [`${name}--loading`]: props.loading
   }));
   return {
@@ -2292,7 +2297,7 @@ var makePositionProps = propsFactory({
 }, "position");
 function usePosition(props) {
   let name = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : getCurrentInstanceName();
-  const positionClasses = computed(() => {
+  const positionClasses = toRef(() => {
     return props.position ? `${name}--${props.position}` : void 0;
   });
   return {
@@ -2418,7 +2423,7 @@ var VBtn = genericComponent()({
       }
       return group == null ? void 0 : group.isSelected.value;
     });
-    const color = computed(() => isActive.value ? props.activeColor ?? props.color : props.color);
+    const color = toRef(() => isActive.value ? props.activeColor ?? props.color : props.color);
     const variantProps = computed(() => {
       var _a2, _b;
       const showColor = (group == null ? void 0 : group.isSelected.value) && (!link.isLink.value || ((_a2 = link.isActive) == null ? void 0 : _a2.value)) || !group || ((_b = link.isActive) == null ? void 0 : _b.value);
@@ -2433,7 +2438,7 @@ var VBtn = genericComponent()({
       variantClasses
     } = useVariant(variantProps);
     const isDisabled = computed(() => (group == null ? void 0 : group.disabled.value) || props.disabled);
-    const isElevated = computed(() => {
+    const isElevated = toRef(() => {
       return props.variant === "elevated" && !(props.disabled || props.flat || props.border);
     });
     const valueAttr = computed(() => {
@@ -2643,15 +2648,11 @@ var VAlert = genericComponent()({
       slots
     } = _ref;
     const isActive = useProxiedModel(props, "modelValue");
-    const icon = computed(() => {
+    const icon = toRef(() => {
       if (props.icon === false) return void 0;
       if (!props.type) return props.icon;
       return props.icon ?? `$${props.type}`;
     });
-    const variantProps = computed(() => ({
-      color: props.color ?? props.type,
-      variant: props.variant
-    }));
     const {
       themeClasses
     } = provideTheme(props);
@@ -2659,7 +2660,10 @@ var VAlert = genericComponent()({
       colorClasses,
       colorStyles,
       variantClasses
-    } = useVariant(variantProps);
+    } = useVariant(() => ({
+      color: props.color ?? props.type,
+      variant: props.variant
+    }));
     const {
       densityClasses
     } = useDensity(props);
@@ -2681,11 +2685,11 @@ var VAlert = genericComponent()({
     const {
       textColorClasses,
       textColorStyles
-    } = useTextColor(toRef(props, "borderColor"));
+    } = useTextColor(() => props.borderColor);
     const {
       t
     } = useLocale();
-    const closeProps = computed(() => ({
+    const closeProps = toRef(() => ({
       "aria-label": t(props.closeLabel),
       onClick(e) {
         isActive.value = false;
@@ -2947,8 +2951,8 @@ var VSelectionControlGroup = genericComponent()({
     } = _ref;
     const modelValue = useProxiedModel(props, "modelValue");
     const uid = useId();
-    const id = computed(() => props.id || `v-selection-control-group-${uid}`);
-    const name = computed(() => props.name || id.value);
+    const id = toRef(() => props.id || `v-selection-control-group-${uid}`);
+    const name = toRef(() => props.name || id.value);
     const updateHandlers = /* @__PURE__ */ new Set();
     provide(VSelectionControlGroupSymbol, {
       modelValue,
@@ -2964,20 +2968,20 @@ var VSelectionControlGroup = genericComponent()({
     });
     provideDefaults({
       [props.defaultsTarget]: {
-        color: toRef(props, "color"),
-        disabled: toRef(props, "disabled"),
-        density: toRef(props, "density"),
-        error: toRef(props, "error"),
-        inline: toRef(props, "inline"),
+        color: toRef(() => props.color),
+        disabled: toRef(() => props.disabled),
+        density: toRef(() => props.density),
+        error: toRef(() => props.error),
+        inline: toRef(() => props.inline),
         modelValue,
-        multiple: computed(() => !!props.multiple || props.multiple == null && Array.isArray(modelValue.value)),
+        multiple: toRef(() => !!props.multiple || props.multiple == null && Array.isArray(modelValue.value)),
         name,
-        falseIcon: toRef(props, "falseIcon"),
-        trueIcon: toRef(props, "trueIcon"),
-        readonly: toRef(props, "readonly"),
-        ripple: toRef(props, "ripple"),
-        type: toRef(props, "type"),
-        valueComparator: toRef(props, "valueComparator")
+        falseIcon: toRef(() => props.falseIcon),
+        trueIcon: toRef(() => props.trueIcon),
+        readonly: toRef(() => props.readonly),
+        ripple: toRef(() => props.ripple),
+        type: toRef(() => props.type),
+        valueComparator: toRef(() => props.valueComparator)
       }
     });
     useRender(() => {
@@ -3035,16 +3039,16 @@ function useSelectionControl(props) {
   const {
     textColorClasses,
     textColorStyles
-  } = useTextColor(computed(() => {
+  } = useTextColor(() => {
     if (props.error || props.disabled) return void 0;
     return model.value ? props.color : props.baseColor;
-  }));
+  });
   const {
     backgroundColorClasses,
     backgroundColorStyles
-  } = useBackgroundColor(computed(() => {
+  } = useBackgroundColor(() => {
     return model.value && !props.error && !props.disabled ? props.color : props.baseColor;
-  }));
+  });
   const icon = computed(() => model.value ? props.trueIcon : props.falseIcon);
   return {
     group,
@@ -3089,8 +3093,8 @@ var VSelectionControl = genericComponent()({
     const isFocused = shallowRef(false);
     const isFocusVisible = shallowRef(false);
     const input = ref();
-    const id = computed(() => props.id || `input-${uid}`);
-    const isInteractive = computed(() => !props.disabled && !props.readonly);
+    const id = toRef(() => props.id || `input-${uid}`);
+    const isInteractive = toRef(() => !props.disabled && !props.readonly);
     group == null ? void 0 : group.onForceUpdate(() => {
       if (input.value) {
         input.value.checked = model.value;
@@ -3225,10 +3229,10 @@ var VCheckboxBtn = genericComponent()({
         indeterminate.value = false;
       }
     }
-    const falseIcon = computed(() => {
+    const falseIcon = toRef(() => {
       return indeterminate.value ? props.indeterminateIcon : props.falseIcon;
     });
-    const trueIcon = computed(() => {
+    const trueIcon = toRef(() => {
       return indeterminate.value ? props.indeterminateIcon : props.trueIcon;
     });
     useRender(() => {
@@ -3318,7 +3322,7 @@ var VMessages = genericComponent()({
     const {
       textColorClasses,
       textColorStyles
-    } = useTextColor(computed(() => props.color));
+    } = useTextColor(() => props.color);
     useRender(() => createVNode(MaybeTransition, {
       "transition": props.transition,
       "tag": "div",
@@ -3344,7 +3348,7 @@ var makeFocusProps = propsFactory({
 function useFocus(props) {
   let name = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : getCurrentInstanceName();
   const isFocused = useProxiedModel(props, "focused");
-  const focusClasses = computed(() => {
+  const focusClasses = toRef(() => {
     return {
       [`${name}--focused`]: isFocused.value
     };
@@ -3380,8 +3384,8 @@ var makeFormProps = propsFactory({
 }, "form");
 function createForm(props) {
   const model = useProxiedModel(props, "modelValue");
-  const isDisabled = computed(() => props.disabled);
-  const isReadonly = computed(() => props.readonly);
+  const isDisabled = toRef(() => props.disabled);
+  const isReadonly = toRef(() => props.readonly);
   const isValidating = shallowRef(false);
   const items = ref([]);
   const errors = ref([]);
@@ -3471,7 +3475,7 @@ function createForm(props) {
     isValidating,
     isValid: model,
     items,
-    validateOn: toRef(props, "validateOn")
+    validateOn: toRef(() => props.validateOn)
   });
   return {
     errors,
@@ -3757,10 +3761,10 @@ var VInput = genericComponent()({
       resetValidation,
       validate
     }));
-    const color = computed(() => {
+    const color = toRef(() => {
       return props.error || props.disabled ? void 0 : props.focused ? props.color : props.baseColor;
     });
-    const iconColor = computed(() => {
+    const iconColor = toRef(() => {
       if (!props.iconColor) return void 0;
       return props.iconColor === true ? color.value : props.iconColor;
     });
@@ -3851,7 +3855,6 @@ var VCheckbox = genericComponent()({
       blur
     } = useFocus(props);
     const uid = useId();
-    const id = computed(() => props.id || `checkbox-${uid}`);
     useRender(() => {
       const [rootAttrs, controlAttrs] = filterInputAttrs(attrs);
       const inputProps = VInput.filterProps(props);
@@ -3861,21 +3864,21 @@ var VCheckbox = genericComponent()({
       }, rootAttrs, inputProps, {
         "modelValue": model.value,
         "onUpdate:modelValue": ($event) => model.value = $event,
-        "id": id.value,
+        "id": props.id || `checkbox-${uid}`,
         "focused": isFocused.value,
         "style": props.style
       }), {
         ...slots,
         default: (_ref2) => {
           let {
-            id: id2,
+            id,
             messagesId,
             isDisabled,
             isReadonly,
             isValid
           } = _ref2;
           return createVNode(VCheckboxBtn, mergeProps(checkboxProps, {
-            "id": id2.value,
+            "id": id.value,
             "aria-describedby": messagesId.value,
             "disabled": isDisabled.value,
             "readonly": isReadonly.value
@@ -4343,11 +4346,11 @@ var VChipGroup = genericComponent()({
     } = useGroup(props, VChipGroupSymbol);
     provideDefaults({
       VChip: {
-        baseColor: toRef(props, "baseColor"),
-        color: toRef(props, "color"),
-        disabled: toRef(props, "disabled"),
-        filter: toRef(props, "filter"),
-        variant: toRef(props, "variant")
+        baseColor: toRef(() => props.baseColor),
+        color: toRef(() => props.color),
+        disabled: toRef(() => props.disabled),
+        filter: toRef(() => props.filter),
+        variant: toRef(() => props.variant)
       }
     });
     useRender(() => {
@@ -4475,9 +4478,9 @@ var VChip = genericComponent()({
     const isActive = useProxiedModel(props, "modelValue");
     const group = useGroupItem(props, VChipGroupSymbol, false);
     const link = useLink(props, attrs);
-    const isLink = computed(() => props.link !== false && link.isLink.value);
+    const isLink = toRef(() => props.link !== false && link.isLink.value);
     const isClickable = computed(() => !props.disabled && props.link !== false && (!!group || props.link || link.isClickable.value));
-    const closeProps = computed(() => ({
+    const closeProps = toRef(() => ({
       "aria-label": t(props.closeLabel),
       onClick(e) {
         e.preventDefault();
@@ -4486,18 +4489,17 @@ var VChip = genericComponent()({
         emit("click:close", e);
       }
     }));
-    const variantProps = computed(() => {
+    const {
+      colorClasses,
+      colorStyles,
+      variantClasses
+    } = useVariant(() => {
       const showColor = !group || group.isSelected.value;
       return {
         color: showColor ? props.color ?? props.baseColor : props.baseColor,
         variant: props.variant
       };
     });
-    const {
-      colorClasses,
-      colorStyles,
-      variantClasses
-    } = useVariant(variantProps);
     function onClick(e) {
       var _a2;
       emit("click", e);
@@ -5158,8 +5160,8 @@ var useNested = (props) => {
     id: shallowRef(),
     root: {
       opened,
-      activatable: toRef(props, "activatable"),
-      selectable: toRef(props, "selectable"),
+      activatable: toRef(() => props.activatable),
+      selectable: toRef(() => props.selectable),
       activated,
       selected,
       selectedValues: computed(() => {
@@ -5290,7 +5292,7 @@ var useNested = (props) => {
 var useNestedItem = (id, isGroup) => {
   const parent = inject(VNestedSymbol, emptyNested);
   const uidSymbol = Symbol("nested item");
-  const computedId = computed(() => id.value !== void 0 ? id.value : uidSymbol);
+  const computedId = computed(() => toValue(id) ?? uidSymbol);
   const item = {
     ...parent,
     id: computedId,
@@ -5370,7 +5372,7 @@ var VListGroup = genericComponent()({
       isOpen,
       open,
       id: _id
-    } = useNestedItem(toRef(props, "value"), true);
+    } = useNestedItem(() => props.value, true);
     const id = computed(() => `v-list-group--id-${String(_id.value)}`);
     const list = useList();
     const {
@@ -5554,12 +5556,12 @@ var VListItem = genericComponent()({
       var _a2;
       return props.active !== false && (props.active || ((_a2 = link.isActive) == null ? void 0 : _a2.value) || (root.activatable.value ? isActivated.value : isSelected.value));
     });
-    const isLink = computed(() => props.link !== false && link.isLink.value);
+    const isLink = toRef(() => props.link !== false && link.isLink.value);
     const isSelectable = computed(() => !!list && (root.selectable.value || root.activatable.value || props.value != null));
     const isClickable = computed(() => !props.disabled && props.link !== false && (props.link || link.isClickable.value || isSelectable.value));
-    const roundedProps = computed(() => props.rounded || props.nav);
-    const color = computed(() => props.color ?? props.activeColor);
-    const variantProps = computed(() => ({
+    const roundedProps = toRef(() => props.rounded || props.nav);
+    const color = toRef(() => props.color ?? props.activeColor);
+    const variantProps = toRef(() => ({
       color: isActive.value ? color.value ?? props.baseColor : props.baseColor,
       variant: props.variant
     }));
@@ -5603,7 +5605,7 @@ var VListItem = genericComponent()({
     const {
       roundedClasses
     } = useRounded(roundedProps);
-    const lineClasses = computed(() => props.lines ? `v-list-item--${props.lines}-line` : void 0);
+    const lineClasses = toRef(() => props.lines ? `v-list-item--${props.lines}-line` : void 0);
     const slotProps = computed(() => ({
       isActive: isActive.value,
       select,
@@ -5790,7 +5792,7 @@ var VListSubheader = genericComponent()({
     const {
       textColorClasses,
       textColorStyles
-    } = useTextColor(toRef(props, "color"));
+    } = useTextColor(() => props.color);
     useRender(() => {
       const hasText = !!(slots.default || props.title);
       return createVNode(props.tag, {
@@ -5840,7 +5842,7 @@ var VDivider = genericComponent()({
     const {
       textColorClasses,
       textColorStyles
-    } = useTextColor(toRef(props, "color"));
+    } = useTextColor(() => props.color);
     const dividerStyles = computed(() => {
       const styles = {};
       if (props.length) {
@@ -6196,7 +6198,7 @@ var VList = genericComponent()({
     const {
       backgroundColorClasses,
       backgroundColorStyles
-    } = useBackgroundColor(toRef(props, "bgColor"));
+    } = useBackgroundColor(() => props.bgColor);
     const {
       borderClasses
     } = useBorder(props);
@@ -6219,30 +6221,30 @@ var VList = genericComponent()({
       select,
       getPath
     } = useNested(props);
-    const lineClasses = computed(() => props.lines ? `v-list--${props.lines}-line` : void 0);
-    const activeColor = toRef(props, "activeColor");
-    const baseColor = toRef(props, "baseColor");
-    const color = toRef(props, "color");
+    const lineClasses = toRef(() => props.lines ? `v-list--${props.lines}-line` : void 0);
+    const activeColor = toRef(() => props.activeColor);
+    const baseColor = toRef(() => props.baseColor);
+    const color = toRef(() => props.color);
     createList();
     provideDefaults({
       VListGroup: {
         activeColor,
         baseColor,
         color,
-        expandIcon: toRef(props, "expandIcon"),
-        collapseIcon: toRef(props, "collapseIcon")
+        expandIcon: toRef(() => props.expandIcon),
+        collapseIcon: toRef(() => props.collapseIcon)
       },
       VListItem: {
-        activeClass: toRef(props, "activeClass"),
+        activeClass: toRef(() => props.activeClass),
         activeColor,
         baseColor,
         color,
-        density: toRef(props, "density"),
-        disabled: toRef(props, "disabled"),
-        lines: toRef(props, "lines"),
-        nav: toRef(props, "nav"),
-        slim: toRef(props, "slim"),
-        variant: toRef(props, "variant")
+        density: toRef(() => props.density),
+        disabled: toRef(() => props.disabled),
+        lines: toRef(() => props.lines),
+        nav: toRef(() => props.nav),
+        slim: toRef(() => props.slim),
+        variant: toRef(() => props.variant)
       }
     });
     const isFocused = shallowRef(false);
@@ -6409,7 +6411,7 @@ var VMenu = genericComponent()({
       isRtl
     } = useRtl();
     const uid = useId();
-    const id = computed(() => props.id || `v-menu-${uid}`);
+    const id = toRef(() => props.id || `v-menu-${uid}`);
     const overlay = ref();
     const parent = inject(VMenuSymbol, null);
     const openChildren = shallowRef(/* @__PURE__ */ new Set());
@@ -6587,7 +6589,7 @@ var VCounter = genericComponent()({
     let {
       slots
     } = _ref;
-    const counter = computed(() => {
+    const counter = toRef(() => {
       return props.max ? `${props.value} / ${props.max}` : String(props.value);
     });
     useRender(() => createVNode(MaybeTransition, {
@@ -6717,12 +6719,12 @@ var VField = genericComponent()({
     const {
       rtlClasses
     } = useRtl();
-    const isActive = computed(() => props.dirty || props.active);
-    const hasLabel = computed(() => !!(props.label || slots.label));
-    const hasFloatingLabel = computed(() => !props.singleLine && hasLabel.value);
+    const isActive = toRef(() => props.dirty || props.active);
+    const hasLabel = toRef(() => !!(props.label || slots.label));
+    const hasFloatingLabel = toRef(() => !props.singleLine && hasLabel.value);
     const uid = useId();
     const id = computed(() => props.id || `input-${uid}`);
-    const messagesId = computed(() => `${id.value}-messages`);
+    const messagesId = toRef(() => `${id.value}-messages`);
     const labelRef = ref();
     const floatingLabelRef = ref();
     const controlRef = ref();
@@ -6737,7 +6739,7 @@ var VField = genericComponent()({
     const {
       backgroundColorClasses,
       backgroundColorStyles
-    } = useBackgroundColor(toRef(props, "bgColor"));
+    } = useBackgroundColor(() => props.bgColor);
     const {
       textColorClasses,
       textColorStyles
@@ -7460,7 +7462,7 @@ var VVirtualScroll = genericComponent()({
       paddingTop,
       paddingBottom,
       computedItems
-    } = useVirtual(props, toRef(props, "items"));
+    } = useVirtual(props, toRef(() => props.items));
     useToggleScope(() => props.renderless, () => {
       function handleListeners() {
         var _a2, _b;
@@ -7699,7 +7701,7 @@ var VSelect = genericComponent()({
         _menu.value = v;
       }
     });
-    const label = computed(() => menu.value ? props.closeText : props.openText);
+    const label = toRef(() => menu.value ? props.closeText : props.openText);
     const computedMenuProps = computed(() => {
       var _a2;
       return {
@@ -7888,6 +7890,7 @@ var VSelect = genericComponent()({
             "onFocusin": onFocusin,
             "tabindex": "-1",
             "aria-live": "polite",
+            "aria-label": `${props.label}-list`,
             "color": props.itemColor ?? props.color
           }, listEvents, props.listProps), {
             default: () => {
@@ -8021,6 +8024,7 @@ var VSelect = genericComponent()({
 // node_modules/vuetify/lib/composables/filter.js
 var defaultFilter = (value, query, item) => {
   if (value == null || query == null) return -1;
+  if (!query.length) return 0;
   value = value.toString().toLocaleLowerCase();
   query = query.toString().toLocaleLowerCase();
   const result = [];
@@ -8033,7 +8037,7 @@ var defaultFilter = (value, query, item) => {
 };
 function normaliseMatch(match, query) {
   if (match == null || typeof match === "boolean" || match === -1) return;
-  if (typeof match === "number") return [[match, query.length]];
+  if (typeof match === "number") return [[match, match + query.length]];
   if (Array.isArray(match[0])) return match;
   return [match];
 }
@@ -8196,10 +8200,6 @@ var VAutocomplete = genericComponent()({
     const vMenuRef = ref();
     const vVirtualScrollRef = ref();
     const selectionIndex = shallowRef(-1);
-    const color = computed(() => {
-      var _a2;
-      return (_a2 = vTextFieldRef.value) == null ? void 0 : _a2.color;
-    });
     const {
       items,
       transformIn,
@@ -8208,7 +8208,10 @@ var VAutocomplete = genericComponent()({
     const {
       textColorClasses,
       textColorStyles
-    } = useTextColor(color);
+    } = useTextColor(() => {
+      var _a2;
+      return (_a2 = vTextFieldRef.value) == null ? void 0 : _a2.color;
+    });
     const search = useProxiedModel(props, "search", "");
     const model = useProxiedModel(props, "modelValue", [], (v) => transformIn(v === null ? [null] : wrapInArray(v)), (v) => {
       const transformed = transformOut(v);
@@ -8669,7 +8672,7 @@ var VBadge = genericComponent()({
     const {
       backgroundColorClasses,
       backgroundColorStyles
-    } = useBackgroundColor(toRef(props, "color"));
+    } = useBackgroundColor(() => props.color);
     const {
       roundedClasses
     } = useRounded(props);
@@ -8679,7 +8682,7 @@ var VBadge = genericComponent()({
     const {
       textColorClasses,
       textColorStyles
-    } = useTextColor(toRef(props, "textColor"));
+    } = useTextColor(() => props.textColor);
     const {
       themeClasses
     } = useTheme();
@@ -8803,7 +8806,7 @@ var VBanner = genericComponent()({
     const {
       backgroundColorClasses,
       backgroundColorStyles
-    } = useBackgroundColor(props, "bgColor");
+    } = useBackgroundColor(() => props.bgColor);
     const {
       borderClasses
     } = useBorder(props);
@@ -8832,8 +8835,8 @@ var VBanner = genericComponent()({
     const {
       themeClasses
     } = provideTheme(props);
-    const color = toRef(props, "color");
-    const density = toRef(props, "density");
+    const color = toRef(() => props.color);
+    const density = toRef(() => props.density);
     provideDefaults({
       VBannerActions: {
         color,
@@ -8948,7 +8951,7 @@ var VBottomNavigation = genericComponent()({
     const {
       backgroundColorClasses,
       backgroundColorStyles
-    } = useBackgroundColor(toRef(props, "bgColor"));
+    } = useBackgroundColor(() => props.bgColor);
     const {
       densityClasses
     } = useDensity(props);
@@ -8968,19 +8971,19 @@ var VBottomNavigation = genericComponent()({
     } = useLayoutItem({
       id: props.name,
       order: computed(() => parseInt(props.order, 10)),
-      position: computed(() => "bottom"),
-      layoutSize: computed(() => isActive.value ? height.value : 0),
+      position: toRef(() => "bottom"),
+      layoutSize: toRef(() => isActive.value ? height.value : 0),
       elementSize: height,
       active: isActive,
-      absolute: toRef(props, "absolute")
+      absolute: toRef(() => props.absolute)
     });
     useGroup(props, VBtnToggleSymbol);
     provideDefaults({
       VBtn: {
-        baseColor: toRef(props, "baseColor"),
-        color: toRef(props, "color"),
-        density: toRef(props, "density"),
-        stacked: computed(() => props.mode !== "horizontal"),
+        baseColor: toRef(() => props.baseColor),
+        color: toRef(() => props.color),
+        density: toRef(() => props.density),
+        stacked: toRef(() => props.mode !== "horizontal"),
         variant: "text"
       }
     }, {
@@ -9232,11 +9235,10 @@ var VBreadcrumbsItem = genericComponent()({
       var _a2;
       return props.active || ((_a2 = link.isActive) == null ? void 0 : _a2.value);
     });
-    const color = computed(() => isActive.value ? props.activeColor : props.color);
     const {
       textColorClasses,
       textColorStyles
-    } = useTextColor(color);
+    } = useTextColor(() => isActive.value ? props.activeColor : props.color);
     useRender(() => {
       return createVNode(props.tag, {
         "class": ["v-breadcrumbs-item", {
@@ -9293,7 +9295,7 @@ var VBreadcrumbs = genericComponent()({
     const {
       backgroundColorClasses,
       backgroundColorStyles
-    } = useBackgroundColor(toRef(props, "bgColor"));
+    } = useBackgroundColor(() => props.bgColor);
     const {
       densityClasses
     } = useDensity(props);
@@ -9302,13 +9304,13 @@ var VBreadcrumbs = genericComponent()({
     } = useRounded(props);
     provideDefaults({
       VBreadcrumbsDivider: {
-        divider: toRef(props, "divider")
+        divider: toRef(() => props.divider)
       },
       VBreadcrumbsItem: {
-        activeClass: toRef(props, "activeClass"),
-        activeColor: toRef(props, "activeColor"),
-        color: toRef(props, "color"),
-        disabled: toRef(props, "disabled")
+        activeClass: toRef(() => props.activeClass),
+        activeColor: toRef(() => props.activeColor),
+        color: toRef(() => props.color),
+        disabled: toRef(() => props.disabled)
       }
     });
     const items = computed(() => props.items.map((item) => {
@@ -9657,10 +9659,10 @@ var VCard = genericComponent()({
       roundedClasses
     } = useRounded(props);
     const link = useLink(props, attrs);
-    const isLink = computed(() => props.link !== false && link.isLink.value);
-    const isClickable = computed(() => !props.disabled && props.link !== false && (props.link || link.isClickable.value));
     useRender(() => {
-      const Tag = isLink.value ? "a" : props.tag;
+      const isLink = props.link !== false && link.isLink.value;
+      const isClickable = !props.disabled && props.link !== false && (props.link || link.isClickable.value);
+      const Tag = isLink ? "a" : props.tag;
       const hasTitle = !!(slots.title || props.title != null);
       const hasSubtitle = !!(slots.subtitle || props.subtitle != null);
       const hasHeader = hasTitle || hasSubtitle;
@@ -9674,10 +9676,10 @@ var VCard = genericComponent()({
           "v-card--disabled": props.disabled,
           "v-card--flat": props.flat,
           "v-card--hover": props.hover && !(props.disabled || props.flat),
-          "v-card--link": isClickable.value
+          "v-card--link": isClickable
         }, themeClasses.value, borderClasses.value, colorClasses.value, densityClasses.value, elevationClasses.value, loaderClasses.value, positionClasses.value, roundedClasses.value, variantClasses.value, props.class],
         "style": [colorStyles.value, dimensionStyles.value, locationStyles.value, props.style],
-        "onClick": isClickable.value && link.navigate,
+        "onClick": isClickable && link.navigate,
         "tabindex": props.disabled ? -1 : void 0
       }, link.linkProps), {
         default: () => {
@@ -9727,9 +9729,9 @@ var VCard = genericComponent()({
             }
           }), (_a2 = slots.default) == null ? void 0 : _a2.call(slots), slots.actions && createVNode(VCardActions, null, {
             default: slots.actions
-          }), genOverlays(isClickable.value, "v-card")];
+          }), genOverlays(isClickable, "v-card")];
         }
-      }), [[resolveDirective("ripple"), isClickable.value && props.ripple]]);
+      }), [[resolveDirective("ripple"), isClickable && props.ripple]]);
     });
     return {};
   }
@@ -9837,8 +9839,8 @@ var VWindow = genericComponent()({
       transitionHeight,
       rootRef
     });
-    const canMoveBack = computed(() => props.continuous || activeIndex.value !== 0);
-    const canMoveForward = computed(() => props.continuous || activeIndex.value !== group.items.value.length - 1);
+    const canMoveBack = toRef(() => props.continuous || activeIndex.value !== 0);
+    const canMoveForward = toRef(() => props.continuous || activeIndex.value !== group.items.value.length - 1);
     function prev() {
       canMoveBack.value && group.prev();
     }
@@ -10760,7 +10762,7 @@ var useSlider = (_ref) => {
   const {
     isRtl
   } = useRtl();
-  const isReversed = toRef(props, "reverse");
+  const isReversed = toRef(() => props.reverse);
   const vertical = computed(() => props.direction === "vertical");
   const indexFromEnd = computed(() => vertical.value !== isReversed.value);
   const {
@@ -10774,7 +10776,7 @@ var useSlider = (_ref) => {
   const tickSize = computed(() => parseInt(props.tickSize, 10));
   const trackSize = computed(() => parseInt(props.trackSize, 10));
   const numTicks = computed(() => (max.value - min.value) / step.value);
-  const disabled = toRef(props, "disabled");
+  const disabled = toRef(() => props.disabled);
   const thumbColor = computed(() => props.error || props.disabled ? void 0 : props.thumbColor ?? props.color);
   const trackColor = computed(() => props.error || props.disabled ? void 0 : props.trackColor ?? props.color);
   const trackFillColor = computed(() => props.error || props.disabled ? void 0 : props.trackFillColor ?? props.color);
@@ -10880,7 +10882,7 @@ var useSlider = (_ref) => {
     const percentage = (val - min.value) / (max.value - min.value) * 100;
     return clamp(isNaN(percentage) ? 0 : percentage, 0, 100);
   };
-  const showTicks = toRef(props, "showTicks");
+  const showTicks = toRef(() => props.showTicks);
   const parsedTicks = computed(() => {
     if (!showTicks.value) return [];
     if (!props.ticks) {
@@ -10911,11 +10913,11 @@ var useSlider = (_ref) => {
   }));
   const data = {
     activeThumbRef,
-    color: toRef(props, "color"),
+    color: toRef(() => props.color),
     decimals,
     disabled,
-    direction: toRef(props, "direction"),
-    elevation: toRef(props, "elevation"),
+    direction: toRef(() => props.direction),
+    elevation: toRef(() => props.elevation),
     hasLabels,
     isReversed,
     indexFromEnd,
@@ -10928,16 +10930,16 @@ var useSlider = (_ref) => {
     parsedTicks,
     parseMouseMove,
     position,
-    readonly: toRef(props, "readonly"),
-    rounded: toRef(props, "rounded"),
+    readonly: toRef(() => props.readonly),
+    rounded: toRef(() => props.rounded),
     roundValue,
     showTicks,
     startOffset,
     step,
     thumbSize,
     thumbColor,
-    thumbLabel: toRef(props, "thumbLabel"),
-    ticks: toRef(props, "ticks"),
+    thumbLabel: toRef(() => props.thumbLabel),
+    ticks: toRef(() => props.ticks),
     tickSize,
     trackColor,
     trackContainerRef,
@@ -11876,7 +11878,7 @@ var VSheet = genericComponent()({
     const {
       backgroundColorClasses,
       backgroundColorStyles
-    } = useBackgroundColor(toRef(props, "color"));
+    } = useBackgroundColor(() => props.color);
     const {
       borderClasses
     } = useBorder(props);
@@ -11922,7 +11924,7 @@ var VPicker = genericComponent()({
     const {
       backgroundColorClasses,
       backgroundColorStyles
-    } = useBackgroundColor(toRef(props, "color"));
+    } = useBackgroundColor(() => props.color);
     useRender(() => {
       const sheetProps = VSheet.filterProps(props);
       const hasTitle = !!(props.title || slots.title);
@@ -12173,10 +12175,6 @@ var VCombobox = genericComponent()({
     const vVirtualScrollRef = ref();
     const selectionIndex = shallowRef(-1);
     let cleared = false;
-    const color = computed(() => {
-      var _a3;
-      return (_a3 = vTextFieldRef.value) == null ? void 0 : _a3.color;
-    });
     const {
       items,
       transformIn,
@@ -12185,7 +12183,10 @@ var VCombobox = genericComponent()({
     const {
       textColorClasses,
       textColorStyles
-    } = useTextColor(color);
+    } = useTextColor(() => {
+      var _a3;
+      return (_a3 = vTextFieldRef.value) == null ? void 0 : _a3.color;
+    });
     const model = useProxiedModel(props, "modelValue", [], (v) => transformIn(wrapInArray(v)), (v) => {
       const transformed = transformOut(v);
       return props.multiple ? transformed : transformed[0] ?? null;
@@ -12242,7 +12243,7 @@ var VCombobox = genericComponent()({
         _menu.value = v;
       }
     });
-    const label = computed(() => menu.value ? props.closeText : props.openText);
+    const label = toRef(() => menu.value ? props.closeText : props.openText);
     watch(_search, (value) => {
       if (cleared) {
         nextTick(() => cleared = false);
@@ -12752,7 +12753,7 @@ var makeDataTableExpandProps = propsFactory({
 }, "DataTable-expand");
 var VDataTableExpandedKey = Symbol.for("vuetify:datatable:expanded");
 function provideExpanded(props) {
-  const expandOnClick = toRef(props, "expandOnClick");
+  const expandOnClick = toRef(() => props.expandOnClick);
   const expanded = useProxiedModel(props, "expanded", props.expanded, (v) => {
     return new Set(v);
   }, (v) => {
@@ -12932,21 +12933,21 @@ function useOptions(_ref) {
     search
   } = _ref;
   const vm = getCurrentInstance("VDataTable");
-  const options = computed(() => ({
+  const options = () => ({
     page: page.value,
     itemsPerPage: itemsPerPage.value,
     sortBy: sortBy.value,
     groupBy: groupBy.value,
     search: search.value
-  }));
+  });
   let oldOptions = null;
-  watch(options, () => {
-    if (deepEqual(oldOptions, options.value)) return;
-    if (oldOptions && oldOptions.search !== options.value.search) {
+  watch(options, (value) => {
+    if (deepEqual(oldOptions, value)) return;
+    if (oldOptions && oldOptions.search !== value.search) {
       page.value = 1;
     }
-    vm.emit("update:options", options.value);
-    oldOptions = options.value;
+    vm.emit("update:options", value);
+    oldOptions = value;
   }, {
     deep: true,
     immediate: true
@@ -13223,7 +13224,7 @@ function provideSelection(props, _ref9) {
     });
     return !!items.length && isSelected(items);
   });
-  const showSelectAll = computed(() => selectStrategy.value.showSelectAll);
+  const showSelectAll = toRef(() => selectStrategy.value.showSelectAll);
   const data = {
     toggleSelect,
     select,
@@ -13258,8 +13259,8 @@ var makeDataTableSortProps = propsFactory({
 var VDataTableSortSymbol = Symbol.for("vuetify:data-table-sort");
 function createSort(props) {
   const sortBy = useProxiedModel(props, "sortBy");
-  const mustSort = toRef(props, "mustSort");
-  const multiSort = toRef(props, "multiSort");
+  const mustSort = toRef(() => props.mustSort);
+  const multiSort = toRef(() => props.multiSort);
   return {
     sortBy,
     mustSort,
@@ -13470,7 +13471,7 @@ var VDataIterator = genericComponent()({
       slots
     } = _ref;
     const groupBy = useProxiedModel(props, "groupBy");
-    const search = toRef(props, "search");
+    const search = toRef(() => props.search);
     const {
       items
     } = useDataIteratorItems(props);
@@ -13514,7 +13515,7 @@ var VDataIterator = genericComponent()({
     const {
       flatItems
     } = useGroupedItems(sortedItems, groupBy, opened);
-    const itemsLength = computed(() => flatItems.value.length);
+    const itemsLength = toRef(() => flatItems.value.length);
     const {
       startIndex,
       stopIndex,
@@ -13809,13 +13810,13 @@ var VPagination = genericComponent()({
     } = useRefs();
     provideDefaults({
       VPaginationBtn: {
-        color: toRef(props, "color"),
-        border: toRef(props, "border"),
-        density: toRef(props, "density"),
-        size: toRef(props, "size"),
-        variant: toRef(props, "variant"),
-        rounded: toRef(props, "rounded"),
-        elevation: toRef(props, "elevation")
+        color: toRef(() => props.color),
+        border: toRef(() => props.border),
+        density: toRef(() => props.density),
+        size: toRef(() => props.size),
+        variant: toRef(() => props.variant),
+        rounded: toRef(() => props.rounded),
+        elevation: toRef(() => props.elevation)
       }
     });
     const items = computed(() => {
@@ -14455,7 +14456,7 @@ var VDataTableHeaders = genericComponent()({
     const {
       backgroundColorClasses,
       backgroundColorStyles
-    } = useBackgroundColor(props, "color");
+    } = useBackgroundColor(() => props.color);
     const {
       displayClasses,
       mobile
@@ -15118,13 +15119,13 @@ var VDataTable = genericComponent()({
       filterFunctions
     } = createHeaders(props, {
       groupBy,
-      showSelect: toRef(props, "showSelect"),
-      showExpand: toRef(props, "showExpand")
+      showSelect: toRef(() => props.showSelect),
+      showExpand: toRef(() => props.showExpand)
     });
     const {
       items
     } = useDataTableItems(props, columns);
-    const search = toRef(props, "search");
+    const search = toRef(() => props.search);
     const {
       filteredItems
     } = useFilter(props, items, search, {
@@ -15207,10 +15208,10 @@ var VDataTable = genericComponent()({
     });
     provideDefaults({
       VDataTableRows: {
-        hideNoData: toRef(props, "hideNoData"),
-        noDataText: toRef(props, "noDataText"),
-        loading: toRef(props, "loading"),
-        loadingText: toRef(props, "loadingText")
+        hideNoData: toRef(() => props.hideNoData),
+        noDataText: toRef(() => props.noDataText),
+        loading: toRef(() => props.loading),
+        loadingText: toRef(() => props.loadingText)
       }
     });
     const slotProps = computed(() => ({
@@ -15312,13 +15313,13 @@ var VDataTableVirtual = genericComponent()({
       sortRawFunctions
     } = createHeaders(props, {
       groupBy,
-      showSelect: toRef(props, "showSelect"),
-      showExpand: toRef(props, "showExpand")
+      showSelect: toRef(() => props.showSelect),
+      showExpand: toRef(() => props.showExpand)
     });
     const {
       items
     } = useDataTableItems(props, columns);
-    const search = toRef(props, "search");
+    const search = toRef(() => props.search);
     const {
       filteredItems
     } = useFilter(props, items, search, {
@@ -15394,10 +15395,10 @@ var VDataTableVirtual = genericComponent()({
     });
     provideDefaults({
       VDataTableRows: {
-        hideNoData: toRef(props, "hideNoData"),
-        noDataText: toRef(props, "noDataText"),
-        loading: toRef(props, "loading"),
-        loadingText: toRef(props, "loadingText")
+        hideNoData: toRef(() => props.hideNoData),
+        noDataText: toRef(() => props.noDataText),
+        loading: toRef(() => props.loading),
+        loadingText: toRef(() => props.loadingText)
       }
     });
     const slotProps = computed(() => ({
@@ -15559,8 +15560,8 @@ var VDataTableServer = genericComponent()({
       headers
     } = createHeaders(props, {
       groupBy,
-      showSelect: toRef(props, "showSelect"),
-      showExpand: toRef(props, "showExpand")
+      showSelect: toRef(() => props.showSelect),
+      showExpand: toRef(() => props.showExpand)
     });
     const {
       items
@@ -15615,7 +15616,7 @@ var VDataTableServer = genericComponent()({
       itemsPerPage,
       sortBy,
       groupBy,
-      search: toRef(props, "search")
+      search: toRef(() => props.search)
     });
     provide("v-data-table", {
       toggleSort,
@@ -15623,10 +15624,10 @@ var VDataTableServer = genericComponent()({
     });
     provideDefaults({
       VDataTableRows: {
-        hideNoData: toRef(props, "hideNoData"),
-        noDataText: toRef(props, "noDataText"),
-        loading: toRef(props, "loading"),
-        loadingText: toRef(props, "loadingText")
+        hideNoData: toRef(() => props.hideNoData),
+        noDataText: toRef(() => props.noDataText),
+        loading: toRef(() => props.loading),
+        loadingText: toRef(() => props.loadingText)
       }
     });
     const slotProps = computed(() => ({
@@ -16100,7 +16101,7 @@ var VDatePickerHeader = genericComponent()({
     const {
       backgroundColorClasses,
       backgroundColorStyles
-    } = useBackgroundColor(props, "color");
+    } = useBackgroundColor(() => props.color);
     function onClick() {
       emit("click");
     }
@@ -16184,7 +16185,7 @@ var makeCalendarProps = propsFactory({
   },
   firstDayOfWeek: {
     type: [Number, String],
-    default: 0
+    default: void 0
   }
 }, "calendar");
 function useCalendar(props) {
@@ -16207,12 +16208,11 @@ function useCalendar(props) {
     return adapter.setMonth(date, value);
   }, (v) => adapter.getMonth(v));
   const weekDays = computed(() => {
-    const firstDayOfWeek = Number(props.firstDayOfWeek);
+    const firstDayOfWeek = adapter.toJsDate(adapter.startOfWeek(adapter.date(), props.firstDayOfWeek)).getDay();
     return [0, 1, 2, 3, 4, 5, 6].map((day) => (day + firstDayOfWeek) % 7);
   });
   const weeksInMonth = computed(() => {
-    const firstDayOfWeek = Number(props.firstDayOfWeek);
-    const weeks = adapter.getWeekArray(month.value, firstDayOfWeek);
+    const weeks = adapter.getWeekArray(month.value, props.firstDayOfWeek);
     const days = weeks.flat();
     const daysInMonth2 = 6 * 7;
     if (props.weeksInMonth === "static" && days.length < daysInMonth2) {
@@ -16239,21 +16239,21 @@ function useCalendar(props) {
       const isSame = adapter.isSameDay(date, month.value);
       return {
         date,
-        isoDate,
         formatted: adapter.format(date, "keyboardDate"),
-        year: adapter.getYear(date),
-        month: adapter.getMonth(date),
-        isDisabled: isDisabled(date),
-        isWeekStart: index % 7 === 0,
-        isWeekEnd: index % 7 === 6,
-        isToday: adapter.isSameDay(date, today),
         isAdjacent,
-        isHidden: isAdjacent && !props.showAdjacentMonths,
-        isStart,
-        isSelected: model.value.some((value) => adapter.isSameDay(date, value)),
+        isDisabled: isDisabled(date),
         isEnd,
+        isHidden: isAdjacent && !props.showAdjacentMonths,
         isSame,
-        localized: adapter.format(date, "dayOfMonth")
+        isSelected: model.value.some((value) => adapter.isSameDay(date, value)),
+        isStart,
+        isToday: adapter.isSameDay(date, today),
+        isWeekEnd: index % 7 === 6,
+        isWeekStart: index % 7 === 0,
+        isoDate,
+        localized: adapter.format(date, "dayOfMonth"),
+        month: adapter.getMonth(date),
+        year: adapter.getYear(date)
       };
     });
   }
@@ -16273,7 +16273,7 @@ function useCalendar(props) {
   });
   const weekNumbers = computed(() => {
     return weeksInMonth.value.map((week) => {
-      return week.length ? getWeek(adapter, week[0]) : null;
+      return week.length ? adapter.getWeek(week[0], props.firstDayOfWeek) : null;
     });
   });
   function isDisabled(value) {
@@ -16340,7 +16340,7 @@ var VDatePickerMonth = genericComponent()({
     const rangeStart = shallowRef();
     const rangeStop = shallowRef();
     const isReverse = shallowRef(false);
-    const transition = computed(() => {
+    const transition = toRef(() => {
       return !isReverse.value ? props.transition : props.reverseTransition;
     });
     if (props.multiple === "range" && model.value.length > 0) {
@@ -16721,7 +16721,7 @@ var VDatePicker = genericComponent()({
       }
       return value && adapter.isValid(value) ? value : today;
     });
-    const headerColor = computed(() => props.headerColor ?? props.color);
+    const headerColor = toRef(() => props.headerColor ?? props.color);
     const month = ref(Number(props.month ?? adapter.getMonth(adapter.startOfMonth(internal.value))));
     const year = ref(Number(props.year ?? adapter.getYear(adapter.startOfYear(adapter.setMonth(internal.value, month.value)))));
     const isReversing = shallowRef(false);
@@ -16738,7 +16738,7 @@ var VDatePicker = genericComponent()({
       date = adapter.setYear(date, year.value);
       return adapter.format(date, "monthAndYear");
     });
-    const headerTransition = computed(() => `date-picker-header${isReversing.value ? "-reverse" : ""}-transition`);
+    const headerTransition = toRef(() => `date-picker-header${isReversing.value ? "-reverse" : ""}-transition`);
     const disabled = computed(() => {
       if (props.disabled) return true;
       const targets = [];
@@ -16949,7 +16949,7 @@ var VEmptyState = genericComponent()({
     const {
       backgroundColorClasses,
       backgroundColorStyles
-    } = useBackgroundColor(toRef(props, "bgColor"));
+    } = useBackgroundColor(() => props.bgColor);
     const {
       dimensionStyles
     } = useDimension(props);
@@ -17121,7 +17121,7 @@ var VExpansionPanelTitle = genericComponent()({
     const {
       backgroundColorClasses,
       backgroundColorStyles
-    } = useBackgroundColor(props, "color");
+    } = useBackgroundColor(() => props.color);
     const {
       dimensionStyles
     } = useDimension(props);
@@ -17132,7 +17132,7 @@ var VExpansionPanelTitle = genericComponent()({
       expandIcon: props.expandIcon,
       readonly: props.readonly
     }));
-    const icon = computed(() => expansionPanel.isSelected.value ? props.collapseIcon : props.expandIcon);
+    const icon = toRef(() => expansionPanel.isSelected.value ? props.collapseIcon : props.expandIcon);
     useRender(() => {
       var _a2;
       return withDirectives(createVNode("button", {
@@ -17194,14 +17194,14 @@ var VExpansionPanel = genericComponent()({
     const {
       backgroundColorClasses,
       backgroundColorStyles
-    } = useBackgroundColor(props, "bgColor");
+    } = useBackgroundColor(() => props.bgColor);
     const {
       elevationClasses
     } = useElevation(props);
     const {
       roundedClasses
     } = useRounded(props);
-    const isDisabled = computed(() => (groupItem == null ? void 0 : groupItem.disabled.value) || props.disabled);
+    const isDisabled = toRef(() => (groupItem == null ? void 0 : groupItem.disabled.value) || props.disabled);
     const selectedIndices = computed(() => groupItem.group.items.value.reduce((arr, item, index) => {
       if (groupItem.group.selected.value.includes(item.id)) arr.push(index);
       return arr;
@@ -17294,21 +17294,21 @@ var VExpansionPanels = genericComponent()({
     const {
       themeClasses
     } = provideTheme(props);
-    const variantClass = computed(() => props.variant && `v-expansion-panels--variant-${props.variant}`);
+    const variantClass = toRef(() => props.variant && `v-expansion-panels--variant-${props.variant}`);
     provideDefaults({
       VExpansionPanel: {
-        bgColor: toRef(props, "bgColor"),
-        collapseIcon: toRef(props, "collapseIcon"),
-        color: toRef(props, "color"),
-        eager: toRef(props, "eager"),
-        elevation: toRef(props, "elevation"),
-        expandIcon: toRef(props, "expandIcon"),
-        focusable: toRef(props, "focusable"),
-        hideActions: toRef(props, "hideActions"),
-        readonly: toRef(props, "readonly"),
-        ripple: toRef(props, "ripple"),
-        rounded: toRef(props, "rounded"),
-        static: toRef(props, "static")
+        bgColor: toRef(() => props.bgColor),
+        collapseIcon: toRef(() => props.collapseIcon),
+        color: toRef(() => props.color),
+        eager: toRef(() => props.eager),
+        elevation: toRef(() => props.elevation),
+        expandIcon: toRef(() => props.expandIcon),
+        focusable: toRef(() => props.focusable),
+        hideActions: toRef(() => props.hideActions),
+        readonly: toRef(() => props.readonly),
+        ripple: toRef(() => props.ripple),
+        rounded: toRef(() => props.rounded),
+        static: toRef(() => props.static)
       }
     });
     useRender(() => createVNode(props.tag, {
@@ -17373,7 +17373,7 @@ var VFab = genericComponent()({
       if (!entries.length) return;
       height.value = entries[0].target.clientHeight;
     });
-    const hasPosition = computed(() => props.app || props.absolute);
+    const hasPosition = toRef(() => props.app || props.absolute);
     const position = computed(() => {
       var _a2;
       if (!hasPosition.value) return false;
@@ -17392,7 +17392,7 @@ var VFab = genericComponent()({
         layoutSize: computed(() => props.layout ? height.value + 24 : 0),
         elementSize: computed(() => height.value + 24),
         active: computed(() => props.app && model.value),
-        absolute: toRef(props, "absolute")
+        absolute: toRef(() => props.absolute)
       });
       watchEffect(() => {
         layoutItemStyles.value = layout.layoutItemStyles.value;
@@ -17519,7 +17519,7 @@ var VFileInput = genericComponent()({
     const vInputRef = ref();
     const vFieldRef = ref();
     const inputRef = ref();
-    const isActive = computed(() => isFocused.value || props.active);
+    const isActive = toRef(() => isFocused.value || props.active);
     const isPlainOrUnderlined = computed(() => ["plain", "underlined"].includes(props.variant));
     function onFocus() {
       var _a2;
@@ -17701,7 +17701,7 @@ var VFooter = genericComponent()({
     const {
       backgroundColorClasses,
       backgroundColorStyles
-    } = useBackgroundColor(toRef(props, "color"));
+    } = useBackgroundColor(() => props.color);
     const {
       borderClasses
     } = useBorder(props);
@@ -17723,11 +17723,11 @@ var VFooter = genericComponent()({
       const layout = useLayoutItem({
         id: props.name,
         order: computed(() => parseInt(props.order, 10)),
-        position: computed(() => "bottom"),
+        position: toRef(() => "bottom"),
         layoutSize: height,
         elementSize: computed(() => props.height === "auto" ? void 0 : height.value),
-        active: computed(() => props.app),
-        absolute: toRef(props, "absolute")
+        active: toRef(() => props.app),
+        absolute: toRef(() => props.absolute)
       });
       watchEffect(() => {
         layoutItemStyles.value = layout.layoutItemStyles.value;
@@ -18222,11 +18222,11 @@ var VLayoutItem = genericComponent()({
     } = useLayoutItem({
       id: props.name,
       order: computed(() => parseInt(props.order, 10)),
-      position: toRef(props, "position"),
-      elementSize: toRef(props, "size"),
-      layoutSize: toRef(props, "size"),
-      active: toRef(props, "modelValue"),
-      absolute: toRef(props, "absolute")
+      position: toRef(() => props.position),
+      elementSize: toRef(() => props.size),
+      layoutSize: toRef(() => props.size),
+      active: toRef(() => props.modelValue),
+      absolute: toRef(() => props.absolute)
     });
     return () => {
       var _a2;
@@ -18713,7 +18713,7 @@ var VNavigationDrawer = genericComponent()({
     const {
       backgroundColorClasses,
       backgroundColorStyles
-    } = useBackgroundColor(toRef(props, "color"));
+    } = useBackgroundColor(() => props.color);
     const {
       elevationClasses
     } = useElevation(props);
@@ -18746,7 +18746,7 @@ var VNavigationDrawer = genericComponent()({
     const location = computed(() => {
       return toPhysical(props.location, isRtl.value);
     });
-    const isPersistent = computed(() => props.persistent);
+    const isPersistent = toRef(() => props.persistent);
     const isTemporary = computed(() => !props.permanent && (mobile.value || props.temporary));
     const isSticky = computed(() => props.sticky && !isTemporary.value && location.value !== "bottom");
     useToggleScope(() => props.expandOnHover && props.rail != null, () => {
@@ -18772,7 +18772,7 @@ var VNavigationDrawer = genericComponent()({
       isActive,
       isTemporary,
       width,
-      touchless: toRef(props, "touchless"),
+      touchless: toRef(() => props.touchless),
       position: location
     });
     const layoutSize = computed(() => {
@@ -18789,7 +18789,7 @@ var VNavigationDrawer = genericComponent()({
       layoutSize,
       elementSize: width,
       active: readonly(isActive),
-      disableTransitions: computed(() => isDragging.value),
+      disableTransitions: toRef(() => isDragging.value),
       absolute: computed(() => (
         // eslint-disable-next-line @typescript-eslint/no-use-before-define
         props.absolute || isSticky.value && typeof isStuck.value !== "string"
@@ -18803,9 +18803,9 @@ var VNavigationDrawer = genericComponent()({
       isSticky,
       layoutItemStyles
     });
-    const scrimColor = useBackgroundColor(computed(() => {
+    const scrimColor = useBackgroundColor(() => {
       return typeof props.scrim === "string" ? props.scrim : null;
-    }));
+    });
     const scrimStyles = computed(() => ({
       ...isDragging.value ? {
         opacity: dragProgress.value * 0.2,
@@ -19027,24 +19027,24 @@ var VNumberInput = genericComponent()({
     const controlVariant = computed(() => {
       return props.hideInput ? "stacked" : props.controlVariant;
     });
-    const incrementIcon = computed(() => controlVariant.value === "split" ? "$plus" : "$collapse");
-    const decrementIcon = computed(() => controlVariant.value === "split" ? "$minus" : "$expand");
-    const controlNodeSize = computed(() => controlVariant.value === "split" ? "default" : "small");
-    const controlNodeDefaultHeight = computed(() => controlVariant.value === "stacked" ? "auto" : "100%");
-    const incrementSlotProps = computed(() => ({
+    const incrementIcon = toRef(() => controlVariant.value === "split" ? "$plus" : "$collapse");
+    const decrementIcon = toRef(() => controlVariant.value === "split" ? "$minus" : "$expand");
+    const controlNodeSize = toRef(() => controlVariant.value === "split" ? "default" : "small");
+    const controlNodeDefaultHeight = toRef(() => controlVariant.value === "stacked" ? "auto" : "100%");
+    const incrementSlotProps = {
       props: {
         onClick: onControlClick,
         onPointerup: onControlMouseup,
         onPointerdown: onUpControlMousedown
       }
-    }));
-    const decrementSlotProps = computed(() => ({
+    };
+    const decrementSlotProps = {
       props: {
         onClick: onControlClick,
         onPointerup: onControlMouseup,
         onPointerdown: onDownControlMousedown
       }
-    }));
+    };
     watch(() => props.precision, () => formatInputValue());
     onMounted(() => {
       clampModel();
@@ -19190,7 +19190,7 @@ var VNumberInput = genericComponent()({
             }
           }
         }, {
-          default: () => [slots.increment(incrementSlotProps.value)]
+          default: () => [slots.increment(incrementSlotProps)]
         });
       }
       function decrementControlNode() {
@@ -19219,7 +19219,7 @@ var VNumberInput = genericComponent()({
             }
           }
         }, {
-          default: () => [slots.decrement(decrementSlotProps.value)]
+          default: () => [slots.decrement(decrementSlotProps)]
         });
       }
       function controlNode() {
@@ -19419,12 +19419,12 @@ var VOtpInput = genericComponent()({
     }
     provideDefaults({
       VField: {
-        color: computed(() => props.color),
-        bgColor: computed(() => props.color),
-        baseColor: computed(() => props.baseColor),
-        disabled: computed(() => props.disabled),
-        error: computed(() => props.error),
-        variant: computed(() => props.variant)
+        color: toRef(() => props.color),
+        bgColor: toRef(() => props.color),
+        baseColor: toRef(() => props.baseColor),
+        disabled: toRef(() => props.disabled),
+        error: toRef(() => props.error),
+        variant: toRef(() => props.variant)
       }
     }, {
       scoped: true
@@ -20224,7 +20224,7 @@ var VSkeletonLoader = genericComponent()({
     const {
       backgroundColorClasses,
       backgroundColorStyles
-    } = useBackgroundColor(toRef(props, "color"));
+    } = useBackgroundColor(() => props.color);
     const {
       dimensionStyles
     } = useDimension(props);
@@ -21005,7 +21005,7 @@ var VSparkline = genericComponent()({
     const {
       textColorClasses,
       textColorStyles
-    } = useTextColor(toRef(props, "color"));
+    } = useTextColor(() => props.color);
     const hasLabels = computed(() => {
       return Boolean(props.showLabels || props.labels.length > 0 || !!(slots == null ? void 0 : slots.label));
     });
@@ -21569,11 +21569,11 @@ var VSwitch = genericComponent()({
     } = useFocus(props);
     const control = ref();
     const isForcedColorsModeActive = IN_BROWSER && window.matchMedia("(forced-colors: active)").matches;
-    const loaderColor = computed(() => {
+    const loaderColor = toRef(() => {
       return typeof props.loading === "string" && props.loading !== "" ? props.loading : props.color;
     });
     const uid = useId();
-    const id = computed(() => props.id || `switch-${uid}`);
+    const id = toRef(() => props.id || `switch-${uid}`);
     function onChange() {
       if (indeterminate.value) {
         indeterminate.value = false;
@@ -21727,7 +21727,7 @@ var VSystemBar = genericComponent()({
     const {
       backgroundColorClasses,
       backgroundColorStyles
-    } = useBackgroundColor(toRef(props, "color"));
+    } = useBackgroundColor(() => props.color);
     const {
       elevationClasses
     } = useElevation(props);
@@ -21747,7 +21747,7 @@ var VSystemBar = genericComponent()({
       layoutSize: height,
       elementSize: height,
       active: computed(() => true),
-      absolute: toRef(props, "absolute")
+      absolute: toRef(() => props.absolute)
     });
     useRender(() => createVNode(props.tag, {
       "class": ["v-system-bar", {
@@ -21790,7 +21790,7 @@ var VTab = genericComponent()({
     const {
       textColorClasses: sliderColorClasses,
       textColorStyles: sliderColorStyles
-    } = useTextColor(props, "sliderColor");
+    } = useTextColor(() => props.sliderColor);
     const rootEl = ref();
     const sliderEl = ref();
     const isHorizontal = computed(() => props.direction === "horizontal");
@@ -21990,18 +21990,18 @@ var VTabs = genericComponent()({
     const {
       backgroundColorClasses,
       backgroundColorStyles
-    } = useBackgroundColor(toRef(props, "bgColor"));
+    } = useBackgroundColor(() => props.bgColor);
     const {
       scopeId
     } = useScopeId();
     provideDefaults({
       VTab: {
-        color: toRef(props, "color"),
-        direction: toRef(props, "direction"),
-        stacked: toRef(props, "stacked"),
-        fixed: toRef(props, "fixedTabs"),
-        sliderColor: toRef(props, "sliderColor"),
-        hideSlider: toRef(props, "hideSlider")
+        color: toRef(() => props.color),
+        direction: toRef(() => props.direction),
+        stacked: toRef(() => props.stacked),
+        fixed: toRef(() => props.fixedTabs),
+        sliderColor: toRef(() => props.sliderColor),
+        hideSlider: toRef(() => props.hideSlider)
       }
     });
     useRender(() => {
@@ -22386,7 +22386,7 @@ var VTimelineDivider = genericComponent()({
     const {
       backgroundColorStyles,
       backgroundColorClasses
-    } = useBackgroundColor(toRef(props, "dotColor"));
+    } = useBackgroundColor(() => props.dotColor);
     const {
       roundedClasses
     } = useRounded(props, "v-timeline-divider__dot");
@@ -22396,7 +22396,7 @@ var VTimelineDivider = genericComponent()({
     const {
       backgroundColorClasses: lineColorClasses,
       backgroundColorStyles: lineColorStyles
-    } = useBackgroundColor(toRef(props, "lineColor"));
+    } = useBackgroundColor(() => props.lineColor);
     useRender(() => createVNode("div", {
       "class": ["v-timeline-divider", {
         "v-timeline-divider--fill-dot": props.fillDot
@@ -22569,17 +22569,17 @@ var VTimeline = genericComponent()({
     } = useRtl();
     provideDefaults({
       VTimelineDivider: {
-        lineColor: toRef(props, "lineColor")
+        lineColor: toRef(() => props.lineColor)
       },
       VTimelineItem: {
-        density: toRef(props, "density"),
-        dotColor: toRef(props, "dotColor"),
-        fillDot: toRef(props, "fillDot"),
-        hideOpposite: toRef(props, "hideOpposite"),
-        iconColor: toRef(props, "iconColor"),
-        lineColor: toRef(props, "lineColor"),
-        lineInset: toRef(props, "lineInset"),
-        size: toRef(props, "size")
+        density: toRef(() => props.density),
+        dotColor: toRef(() => props.dotColor),
+        fillDot: toRef(() => props.fillDot),
+        hideOpposite: toRef(() => props.hideOpposite),
+        iconColor: toRef(() => props.iconColor),
+        lineColor: toRef(() => props.lineColor),
+        lineInset: toRef(() => props.lineInset),
+        size: toRef(() => props.size)
       }
     });
     const sideClasses = computed(() => {
@@ -22627,9 +22627,9 @@ var VToolbarItems = genericComponent()({
     } = _ref;
     provideDefaults({
       VBtn: {
-        color: toRef(props, "color"),
+        color: toRef(() => props.color),
         height: "inherit",
-        variant: toRef(props, "variant")
+        variant: toRef(() => props.variant)
       }
     });
     useRender(() => {

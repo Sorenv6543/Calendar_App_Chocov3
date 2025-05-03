@@ -521,3 +521,35 @@ This will provide the required type definitions for Node.js, and the error will 
 
 ---
 
+_**User**_
+
+i want to add .vite\ and all its sub dirs and file to my fitignore
+
+---
+
+_**Assistant**_
+
+
+
+---
+
+
+
+---
+
+
+
+---
+
+
+
+---
+
+
+
+---
+
+
+
+---
+

@@ -26,7 +26,7 @@ import {
   querystring,
   querystringDecode,
   registerVersion
-} from "./chunk-5CMO42JT.js";
+} from "./chunk-ANEEROL5.js";
 import "./chunk-BUSYA2B4.js";
 
 // node_modules/tslib/tslib.es6.mjs
