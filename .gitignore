@@ -67,3 +67,5 @@ node_modules/
 
 # dataconnect generated files
 .dataconnect
+# SpecStory explanation file
+.specstory/.what-is-this.md
