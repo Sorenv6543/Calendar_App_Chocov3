@@ -1,27 +1,34 @@
-// src/auth.js
-
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "firebase/auth";
-import { app } from './firebaseConfig.js';
+import {
+  getAuth,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  onAuthStateChanged,
+  signOut,
+  User,
+} from "firebase/auth";
+import { app } from "./firebaseConfig";
 
 const auth = getAuth(app);
 
 // Register a new user
-export const registerUser = (email, password) => {
+export const registerUser = (email: string, password: string) => {
   return createUserWithEmailAndPassword(auth, email, password);
 };
 
 // Log in an existing user
-export const loginUser = (email, password) => {
+export const loginUser = (email: string, password: string) => {
   return signInWithEmailAndPassword(auth, email, password);
 };
 
 // Get the current authenticated user
-export const getCurrentUser = () => {
+export const getCurrentUser = (): User | null => {
   return auth.currentUser;
 };
 
 // Listen for authentication state changes
-export const onAuthStateChangedListener = (callback) => {
+export const onAuthStateChangedListener = (
+  callback: (user: User | null) => void
+) => {
   return onAuthStateChanged(auth, callback);
 };
 

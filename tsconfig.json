@@ -5,7 +5,7 @@
     "module": "ESNext",
     "lib": ["ESNext", "DOM", "DOM.Iterable"],
     "skipLibCheck": true,
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
@@ -15,7 +15,8 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
-    "types": ["vite/client", "vue"],
+    "types": ["node"],
+    "typeRoots": ["./node_modules/@types", "./node_modules/.pnpm/@types+node@22.15.3/node_modules/@types"],
     "paths": {
       "@/*": ["./src/*"]
     },
@@ -28,6 +29,6 @@
     "src/**/*.tsx",
     "src/**/*.vue",
     "vite.config.ts"
-, "src/components/NavigationBar.bak"  ],
+  ],
   "references": [{ "path": "./tsconfig.node.json" }]
 } 

@@ -11,8 +11,7 @@ const routes: RouteRecordRaw[] = [
   },
   {
     path: "/login",
-    name: "login-direct",
-    component: () => import("./components/Login.vue"),
+    redirect: { name: "login" },
   },
   {
     path: "/register",
@@ -24,6 +23,7 @@ const routes: RouteRecordRaw[] = [
     name: "home",
     component: () => import("./components/Home.vue"),
   },
+  // Including the playground routes, we'll make them lazy loaded
   {
     path: "/playground",
     name: "playground",
@@ -33,16 +33,6 @@ const routes: RouteRecordRaw[] = [
     path: "/playground2",
     name: "playground2",
     component: () => import("./components/Playground2.vue"),
-  },
-  {
-    path: "/sidebar",
-    name: "sidebar",
-    component: () => import("./components/NavigationBar.bak"),
-  },
-  {
-    path: "/userprofile",
-    name: "userprofile",
-    component: () => import("./components/Userprofile.vue"),
   },
 ];
 

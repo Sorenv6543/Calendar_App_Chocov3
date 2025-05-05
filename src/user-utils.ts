@@ -1,6 +1,7 @@
 import { doc, onSnapshot, updateDoc, arrayRemove } from "firebase/firestore";
 import { db } from "./firebaseConfig";
 import { auth } from "./auth";
+import { User } from "firebase/auth";
 import { House } from "./stores/houseStore";
 import { useHouseStore } from "./stores/houseStore";
 
@@ -9,18 +10,37 @@ interface UserData {
   id: string;
   email: string;
   fullName: string;
+  houses: House[];
 }
 
-interface StoreState {
+interface House {
+  userId: string;
+  houseId: string;
+  address: string;
+  color: string;
+  selected?: boolean;
+  contactnumber?: string;
+}
+
+interface UserStore {
   userData: UserData | null;
   isLoading: boolean;
   error: string | null;
+  houses?: House[];
 }
 
 // Function to fetch user data
-export const fetchUserData = (currentUser: any, state: StoreState) => {
+export const fetchUserData = (
+  currentUser: User,
+  state: UserStore
+): (() => void) => {
   const userDocRef = doc(db, "users", currentUser.uid);
   const houseStore = useHouseStore();
+
+  // Initialize houses array immediately to prevent errors while data is loading
+  if (!state.houses || !Array.isArray(state.houses)) {
+    state.houses = [];
+  }
 
   // Listen to real-time updates in Firestore for the user's document
   const unsubscribeUser = onSnapshot(
@@ -28,14 +48,13 @@ export const fetchUserData = (currentUser: any, state: StoreState) => {
     (doc) => {
       if (doc.exists()) {
         const userData = doc.data();
-        
-        // Update user data in userStore
         state.userData = {
-          id: currentUser.uid,
+          id: auth.currentUser?.uid || "",
           email: userData?.email || currentUser.email || "",
           fullName: userData?.fullName || "",
+          houses: Array.isArray(userData?.houses) ? userData.houses : [],
         };
-        
+
         // Update houses in houseStore
         if (Array.isArray(userData?.houses)) {
           houseStore.setHouses(userData.houses as House[]);
@@ -45,9 +64,10 @@ export const fetchUserData = (currentUser: any, state: StoreState) => {
       } else {
         // Create empty userData structure to prevent null references
         state.userData = {
-          id: currentUser.uid,
+          id: auth.currentUser?.uid || "",
           email: currentUser.email || "",
           fullName: "",
+          houses: [],
         };
         houseStore.setHouses([]);
         state.error = "User document does not exist";
@@ -62,16 +82,17 @@ export const fetchUserData = (currentUser: any, state: StoreState) => {
       // Ensure userData is at least initialized with empty values on error
       if (!state.userData) {
         state.userData = {
-          id: currentUser.uid,
+          id: auth.currentUser?.uid || "",
           email: currentUser.email || "",
           fullName: "",
+          houses: [],
         };
       }
       houseStore.setHouses([]);
     }
   );
 
-  return unsubscribeUser; // Return the unsubscribe function for cleanup
+  return unsubscribeUser; // Return the unsubscribe function to allow cleanup in Home.vue
 };
 
 // Function to delete a house

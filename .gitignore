@@ -105,3 +105,5 @@ dist-ssr
 tmp.md
 # SpecStory explanation file
 .specstory/.what-is-this.md
+# SpecStory project identity file
+.specstory/.project.json
