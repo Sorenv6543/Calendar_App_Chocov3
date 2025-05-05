@@ -1,2 +1,46 @@
 # Don't index SpecStory auto-save files, but allow explicit context inclusion via @ references
 .specstory/**
+
+# Build output
+dist/**
+dist-ssr/**
+
+# Dependency directories
+node_modules/**
+.vite/**
+
+# Package manager locks
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+
+# Cache and temporary files
+.npm/**
+.vscode/**
+.idea/**
+.git/**
+*.log
+*.local
+.DS_Store
+Thumbs.db
+
+# Large binary/asset files
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.ico
+*.svg
+*.woff
+*.woff2
+*.ttf
+*.eot
+*.mp3
+*.mp4
+*.mov
+*.avi
+*.pdf
+
+
+
+
