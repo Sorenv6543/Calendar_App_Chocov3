@@ -8,7 +8,7 @@
   "editor.inlineSuggest.enabled": true,
   "files.autoSave": "afterDelay",
   "files.autoSaveDelay": 1000,
-  "scm.diffDecorationsGutterVisibility": "hover",
+  "scm.diffDecorationsGutterVisibility": "none",
   "workbench.editor.enablePreview": true,
   "workbench.editor.closeOnFileDelete": true,
   "workbench.editor.enablePreviewFromCodeNavigation": true,
@@ -63,19 +63,5 @@
   "editor.snippetSuggestions": "inline",
   "editor.acceptSuggestionOnEnter": "on",
   "editor.acceptSuggestionOnCommitCharacter": true,
-  "volar.takeOverMode.enabled": false,
-  "jest.autoRun": "off",
-  "jest.jestCommandLine": "npx vitest",
-  "jest.testExplorer": {
-    "enabled": true,
-    "showClassicStatus": true
-  },
-  "typescript.tsdk": "node_modules/typescript/lib",
-  "editor.formatOnSave": true,
-  "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": true
-  },
-  "vitest.commandLine": "npx vitest",
-  "vitest.enable": true,
-  "vitest.showFailMessages": true
+  "volar.takeOverMode.enabled": false
 }

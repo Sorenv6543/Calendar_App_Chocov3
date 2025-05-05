@@ -26,7 +26,8 @@
       </v-card>
     </v-slide-y-transition>
 
-    <HouseModal v-model="showModal" :is-visible="showModal" @closeModal="showModal = false" />
+    <HouseModal v-model="showModal" :is-visible="showModal" @closeModal="showModal = false"
+      @houseAdded="handleHouseAdded" />
   </div>
 </template>
 
@@ -38,6 +39,8 @@ import HouseModal from "./HouseModal.vue";
 
 const userStore = useUserStore();
 const showModal = ref(false);
+const localHouses = ref([]);
+const isInitialized = ref(false);
 
 // Map house colors to Vuetify color classes
 const colorMap = {
@@ -59,43 +62,98 @@ const getColorClass = (hexColor) => {
   return colorMap[hexColor] || 'primary';
 };
 
-// Computed property to display houses from userStore
+// Computed property to combine userStore houses with any local houses
 const displayedHouses = computed(() => {
-  // Get houses directly from userStore
-  const houses = userStore.userData?.houses || [];
+  // Get houses from userStore
+  const storeHouses = userStore.userData?.houses || [];
+
+  // Prefer store houses, but include any local houses that might not be in store yet
+  // This ensures both locally added houses and server-fetched houses are shown
+  const combinedHouses = [...storeHouses];
+
+  // Add any local houses that aren't in the store yet (by houseId)
+  localHouses.value.forEach(localHouse => {
+    if (!combinedHouses.some(h => h.houseId === localHouse.houseId)) {
+      combinedHouses.push(localHouse);
+    }
+  });
 
   // Make sure all houses have a selected property
-  return houses.map(house => ({
+  return combinedHouses.map(house => ({
     ...house,
     selected: typeof house.selected === 'boolean' ? house.selected : true
   }));
 });
 
+// Refresh houses from the store
+const refreshHouses = async () => {
+  console.log("Refreshing houses...");
+  try {
+    // Force a fetch from Firestore if user is authenticated
+    if (auth.currentUser) {
+      await userStore.fetchUserData(auth.currentUser);
+
+      // Update our local reference with houses from store to maintain reactivity
+      localHouses.value = userStore.userData?.houses ?
+        JSON.parse(JSON.stringify(userStore.userData.houses)) : [];
+
+      console.log("Houses refreshed from server:", localHouses.value.length);
+    }
+  } catch (error) {
+    console.error("Error refreshing houses:", error);
+  } finally {
+    isInitialized.value = true;
+  }
+};
+
 // Initialize component and set up watchers
 onMounted(async () => {
-  // No need to refresh houses - the userStore will handle it
-  // await refreshHouses();
+  // Initial fetch of houses
+  await refreshHouses();
 
   // Watch for any changes to userStore.userData.houses
-  // watch(() => userStore.userData?.houses, (newHouses) => {
-  //   console.log("Houses changed in store:", newHouses?.length || 0);
-  //   // Update local reference to store data
-  //   if (newHouses && Array.isArray(newHouses)) {
-  //     localHouses.value = JSON.parse(JSON.stringify(newHouses));
-  //   }
-  // }, { deep: true });
+  watch(() => userStore.userData?.houses, (newHouses) => {
+    console.log("Houses changed in store:", newHouses?.length || 0);
+    // Update local reference to store data
+    if (newHouses && Array.isArray(newHouses)) {
+      localHouses.value = JSON.parse(JSON.stringify(newHouses));
+    }
+  }, { deep: true });
 });
 
 const confirmDelete = async (house) => {
   if (confirm(`Are you sure you want to delete ${house.address}?`)) {
     try {
       await userStore.deleteHouse(house);
-      console.log("House deleted successfully");
+      console.log("House deleted, refreshing data");
+
+      // Remove from local array immediately for responsive UI
+      localHouses.value = localHouses.value.filter(h => h.houseId !== house.houseId);
+
+      // Then refresh from server
+      setTimeout(() => {
+        refreshHouses();
+      }, 300);
     } catch (error) {
       console.error("Error deleting house:", error);
       alert("Failed to delete house. Please try again.");
     }
   }
+};
+
+const handleHouseAdded = (newHouse) => {
+  console.log("New house added in UI:", newHouse);
+
+  // Add to local array immediately for responsive UI
+  localHouses.value.push({
+    ...newHouse,
+    selected: true
+  });
+
+  // Then refresh from server after a short delay
+  setTimeout(() => {
+    refreshHouses();
+  }, 300);
 };
 </script>
 

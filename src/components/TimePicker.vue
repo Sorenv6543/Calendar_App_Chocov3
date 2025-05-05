@@ -33,54 +33,43 @@
     </v-dialog>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { ref, watch } from 'vue';
 
-interface Props {
-    modelValue?: string;
-    isVisible: boolean;
-}
+const props = defineProps({
+    modelValue: String,
+    isVisible: Boolean
+});
 
-const props = defineProps<Props>();
+const emit = defineEmits(['update:modelValue', 'update:isVisible']);
 
-const emit = defineEmits<{
-    'update:modelValue': [value: string];
-    'update:isVisible': [value: boolean];
-}>();
+const hours = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
+const minutes = ['00', '05', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55'];
 
-const hours: string[] = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
-const minutes: string[] = ['00', '05', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55'];
-
-const selectedHour = ref<string>('12');
-const selectedMinute = ref<string>('00');
-const selectedPeriod = ref<'AM' | 'PM'>('AM');
+const selectedHour = ref('12');
+const selectedMinute = ref('00');
+const selectedPeriod = ref('AM');
 
 // Initialize values when dialog opens
-watch(() => props.isVisible, (newValue: boolean) => {
+watch(() => props.isVisible, (newValue) => {
     if (newValue && props.modelValue) {
         const match = props.modelValue.match(/(\d+):(\d+)\s*(AM|PM)/i);
         if (match) {
             selectedHour.value = match[1].replace(/^0+/, '') || '12';
             selectedMinute.value = match[2];
-            selectedPeriod.value = match[3].toUpperCase() as 'AM' | 'PM';
+            selectedPeriod.value = match[3].toUpperCase();
         }
     }
 });
 
-function updateTime(): void {
+function updateTime() {
     emit('update:modelValue',
         `${selectedHour.value}:${selectedMinute.value} ${selectedPeriod.value}`
     );
 }
 
-function close(): void {
+function close() {
     emit('update:isVisible', false);
-}
-</script>
-
-<script lang="ts">
-export default {
-    name: 'TimePicker'
 }
 </script>
 

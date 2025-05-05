@@ -1,6 +1,6 @@
 <template>
-  <v-dialog v-model="formState.dialog" max-width="450px" content-class="event-modal-dialog" width="100%"
-    :persistent="false" transition="fade-transition" origin="center center">
+  <v-dialog v-model="dialog" max-width="450px" content-class="event-modal-dialog" width="100%" :persistent="false"
+    transition="fade-transition" origin="center center">
     <v-card class="event-modal-card">
       <div class="modal-glass-effect"></div>
 
@@ -17,17 +17,17 @@
             <div class="custom-select-header" @click.stop="toggleHouseDropdown"
               :class="{ 'disabled': props.event, 'active': !props.event }">
               <div class="selected-house-display">
-                <div v-if="formState.selectedHouse" class="d-flex align-center">
-                  <div class="rounded-circle me-2" :style="`background-color: ${formState.selectedHouse.color || '#2979ff'
+                <div v-if="selectedHouse" class="d-flex align-center">
+                  <div class="rounded-circle me-2" :style="`background-color: ${selectedHouse.color || '#2979ff'
                     }; width: 16px; height: 16px;`"></div>
-                  <span>{{ formState.selectedHouse.address }}</span>
+                  <span>{{ selectedHouse.address }}</span>
                 </div>
                 <span v-else class="placeholder-text">{{ props.event ? "No house associated" : "Click to select a house"
-                }}</span>
+                  }}</span>
               </div>
               <v-icon v-if="!props.event" color="primary">mdi-chevron-down</v-icon>
             </div>
-            <div v-if="formState.showHouseDropdown" class="custom-select-dropdown">
+            <div v-if="showHouseDropdown" class="custom-select-dropdown">
               <div v-for="house in uniqueHouses" :key="house.houseId" class="house-option"
                 @click.stop="selectHouse(house)">
                 <div class="d-flex align-center">
@@ -44,8 +44,8 @@
         <div class="date-range-container">
           <div class="input-group">
             <div class="d-flex align-center mb-1">
-
-              <span class="ml-2 input-label text-medium-emphasis">Check-In</span>
+              
+              <span class="ml-2 input-label text-medium-emphasis"  >Check-In</span>
             </div>
 
             <v-menu v-model="startDateMenu" :close-on-content-click="false" :nudge-right="40"
@@ -55,14 +55,14 @@
                   class="glass-input date-field" hide-details prepend-inner-icon="mdi-calendar-outline"
                   v-bind="props"></v-text-field>
               </template>
-              <v-date-picker v-model="formState.eventStartDate" @update:model-value="startDateMenu = false"
+              <v-date-picker v-model="eventStartDate" @update:model-value="startDateMenu = false"
                 color="primary"></v-date-picker>
             </v-menu>
           </div>
 
           <div class="input-group">
             <div class="d-flex align-center mb-1">
-
+             
               <span class="ml-2 input-label">Check-Out</span>
             </div>
 
@@ -73,8 +73,8 @@
                   class="glass-input date-field" hide-details prepend-inner-icon="mdi-calendar-outline"
                   v-bind="props"></v-text-field>
               </template>
-              <v-date-picker v-model="formState.eventEndDate" @update:model-value="endDateMenu = false" color="primary"
-                :min="formState.eventStartDate"></v-date-picker>
+              <v-date-picker v-model="eventEndDate" @update:model-value="endDateMenu = false" color="primary"
+                :min="eventStartDate"></v-date-picker>
             </v-menu>
           </div>
         </div>
@@ -86,13 +86,13 @@
               <v-icon color="primary" size="20">mdi-clock-outline</v-icon>
               <span class="ml-2 input-label">Turn</span>
             </div>
-            <v-switch v-model="formState.turn" color="primary" hide-details density="compact"
+            <v-switch v-model="turn" color="primary" hide-details density="compact"
               @update:model-value="handleTurnChange" class="ma-0 pa-0"></v-switch>
           </div>
 
-          <div v-if="formState.turn" class="turn-details mt-2">
+          <div v-if="turn" class="turn-details mt-2">
             <div class="d-flex align-center mb-1">
-
+          
               <span class="ml-2 input-label">Turn Date</span>
             </div>
 
@@ -103,8 +103,8 @@
                   class="glass-input date-field mb-2" hide-details prepend-inner-icon="mdi-calendar-outline"
                   placeholder="Select turn date" v-bind="props"></v-text-field>
               </template>
-              <v-date-picker v-model="formState.turndate" @update:model-value="turnDateMenu = false" color="primary"
-                :min="formState.eventStartDate" :max="formState.eventEndDate"></v-date-picker>
+              <v-date-picker v-model="turndate" @update:model-value="turnDateMenu = false" color="primary"
+                :min="eventStartDate" :max="eventEndDate"></v-date-picker>
             </v-menu>
 
             <div class="date-range-container">
@@ -114,7 +114,7 @@
                   <span class="ml-2 input-label">Check-in</span>
                 </div>
 
-                <v-text-field v-model="formState.turncheckintime" readonly @click="openCheckInDialog" variant="outlined"
+                <v-text-field v-model="turncheckintime" readonly @click="openCheckInDialog" variant="outlined"
                   density="comfortable" class="glass-input time-field" placeholder="12:00 PM"
                   hide-details></v-text-field>
               </div>
@@ -125,8 +125,8 @@
                   <span class="ml-2 input-label">Check-out</span>
                 </div>
 
-                <v-text-field v-model="formState.turncheckouttime" readonly @click="openCheckOutDialog"
-                  variant="outlined" density="comfortable" class="glass-input time-field" placeholder="12:00 PM"
+                <v-text-field v-model="turncheckouttime" readonly @click="openCheckOutDialog" variant="outlined"
+                  density="comfortable" class="glass-input time-field" placeholder="12:00 PM"
                   hide-details></v-text-field>
               </div>
             </div>
@@ -140,7 +140,7 @@
             <span class="ml-2 input-label">Event Details</span>
           </div>
 
-          <v-textarea v-model="formState.eventnotes" variant="outlined" density="comfortable" rows="3" hide-details
+          <v-textarea v-model="eventnotes" variant="outlined" density="comfortable" rows="3" hide-details
             class="glass-input"></v-textarea>
         </div>
       </v-card-text>
@@ -251,14 +251,13 @@
   </v-dialog>
 
   <!-- Time Picker Components -->
-  <TimePicker v-model="formState.turncheckintime" v-model:isVisible="checkInTimeDialog" />
-  <TimePicker v-model="formState.turncheckouttime" v-model:isVisible="checkOutTimeDialog" />
+  <TimePicker v-model="turncheckintime" v-model:isVisible="checkInTimeDialog" />
+  <TimePicker v-model="turncheckouttime" v-model:isVisible="checkOutTimeDialog" />
 </template>
 
 <script setup>
-import { defineProps, defineEmits, computed, onMounted, onBeforeUnmount } from "vue";
+import { ref, defineProps, defineEmits, watch, computed, onMounted, nextTick, onBeforeUnmount } from "vue";
 import TimePicker from "./TimePicker.vue";
-import { useEventForm } from "../composables/useEventForm";
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
@@ -270,53 +269,67 @@ const props = defineProps({
 
 const emit = defineEmits(["close", "create", "update", "delete", "update:modelValue"]);
 
-// Use the event form composable for consolidated state management
-const {
-  // State
-  formState,
-  confirmDeleteDialog,
-  houseWarningDialog,
-  dateWarningDialog,
-  turnDateWarningDialog,
-  startDateMenu,
-  endDateMenu,
-  turnDateMenu,
-  checkInTimeDialog,
-  checkOutTimeDialog,
+// State
+const dialog = ref(false);
+const selectedHouse = ref(null);
+const eventStartDate = ref(
+  props.eventStartDate || new Date().toISOString().split("T")[0]
+);
+const eventEndDate = ref(
+  props.eventEndDate || new Date().toISOString().split("T")[0]
+);
+const turn = ref(false);
+const turndate = ref("");
+const turncheckintime = ref("");
+const turncheckouttime = ref("");
+const eventnotes = ref("");
+const confirmDeleteDialog = ref(false);
+const houseWarningDialog = ref(false);
+const dateWarningDialog = ref(false);
+const turnDateWarningDialog = ref(false);
 
-  // Computed
-  formattedStartDate,
-  formattedEndDate,
-  formattedTurnDate,
+// Date picker menus
+const startDateMenu = ref(false);
+const endDateMenu = ref(false);
+const turnDateMenu = ref(false);
 
-  // Methods
-  closeModal,
-  resetForm,
-  handleTurnChange,
-  toggleHouseDropdown,
-  selectHouse,
-  openCheckInDialog,
-  openCheckOutDialog,
-  confirmDelete,
-  saveEvent,
-  deleteEvent,
+// Time picker dialogs
+const checkInTimeDialog = ref(false);
+const checkOutTimeDialog = ref(false);
 
-  // Time management
-  selectedCheckInHour,
-  selectedCheckInMinute,
-  selectedCheckInPeriod,
-  selectedCheckOutHour,
-  selectedCheckOutMinute,
-  selectedCheckOutPeriod,
-  validateHourInput,
-  validateMinuteInput,
-  updateCheckInTime,
-  updateCheckOutTime
-} = useEventForm(props, emit);
+// Formatted dates for display
+const formattedStartDate = computed(() => {
+  if (!eventStartDate.value) return '';
+  return formatDate(eventStartDate.value);
+});
 
-// Computed to deduplicate houses
+const formattedEndDate = computed(() => {
+  if (!eventEndDate.value) return '';
+  return formatDate(eventEndDate.value);
+});
+
+const formattedTurnDate = computed(() => {
+  if (!turndate.value) return '';
+  return formatDate(turndate.value);
+});
+
+// Date formatting function
+function formatDate(dateString) {
+  if (!dateString) return '';
+  try {
+    const [year, month, day] = dateString.split('-');
+    return `${month}/${day}/${year}`;
+  } catch (e) {
+    return dateString;
+  }
+}
+
+// Add to script section
+const showHouseDropdown = ref(false);
+
+// Computed property to filter out duplicate houses
 const uniqueHouses = computed(() => {
-  // Use a Map to ensure uniqueness by houseId first
+  // Use a Map to ensure uniqueness by houseId first, then by normalized address
   const uniqueMap = new Map();
 
   props.houses.forEach((house) => {
@@ -338,7 +351,7 @@ const uniqueHouses = computed(() => {
 watch(
   () => props.modelValue,
   (val) => {
-    formState.dialog = val;
+    dialog.value = val;
 
     // If opening modal for new event (not editing), ensure house dropdown is highlighted
     if (val && !props.event) {
@@ -358,7 +371,7 @@ watch(
 
 // Watch dialog changes to emit update:modelValue events
 watch(
-  () => formState.dialog,
+  () => dialog.value,
   (val) => {
     emit("update:modelValue", val);
     if (!val) emit("close");
@@ -371,9 +384,9 @@ watch(
   (newDate) => {
     if (newDate && !props.event) {
       // Only update if we're creating a new event (not editing)
-      formState.eventStartDate = newDate;
+      eventStartDate.value = newDate;
       // Also set end date to the same date by default
-      formState.eventEndDate = newDate;
+      eventEndDate.value = newDate;
     }
   },
   { immediate: true }
@@ -385,7 +398,7 @@ watch(
   (newDate) => {
     if (newDate && !props.event) {
       // Only update if we're creating a new event (not editing)
-      formState.eventEndDate = newDate;
+      eventEndDate.value = newDate;
     }
   },
   { immediate: true }
@@ -406,7 +419,7 @@ const loadEventData = (event) => {
   if (!event) return;
 
   // Set basic event properties
-  formState.selectedHouse =
+  selectedHouse.value =
     props.houses.find((h) => h.address === event.title) || null;
 
   // Parse dates
@@ -414,17 +427,78 @@ const loadEventData = (event) => {
   const endDate = event.end ? new Date(event.end) : new Date(startDate);
 
   // Format dates for form inputs (YYYY-MM-DD)
-  formState.eventStartDate = startDate.toISOString().split("T")[0];
-  formState.eventEndDate = endDate.toISOString().split("T")[0];
+  eventStartDate.value = startDate.toISOString().split("T")[0];
+  eventEndDate.value = endDate.toISOString().split("T")[0];
 
   // Set turn properties
-  formState.turn = event.extendedProps?.turn || false;
-  formState.turndate = event.extendedProps?.turndate || formState.eventStartDate;
-  formState.turncheckintime = event.extendedProps?.turncheckintime || "";
-  formState.turncheckouttime = event.extendedProps?.turncheckouttime || "";
+  turn.value = event.extendedProps?.turn || false;
+  turndate.value = event.extendedProps?.turndate || eventStartDate.value;
+  turncheckintime.value = event.extendedProps?.turncheckintime || "";
+  turncheckouttime.value = event.extendedProps?.turncheckouttime || "";
 
   // Set event notes
-  formState.eventnotes = event.extendedProps?.eventnotes || "";
+  eventnotes.value = event.extendedProps?.eventnotes || "";
+};
+
+const closeModal = () => {
+  dialog.value = false;
+  emit("update:modelValue", false);
+  resetForm();
+};
+
+const resetForm = () => {
+  selectedHouse.value = null;
+  eventStartDate.value = new Date().toISOString().split("T")[0];
+  eventEndDate.value = new Date().toISOString().split("T")[0];
+  turn.value = false;
+  turndate.value = "";
+  turncheckintime.value = "";
+  turncheckouttime.value = "";
+  eventnotes.value = "";
+};
+
+const handleTurnChange = (val) => {
+  if (val) {
+    // Ensure turndate is set to start date if not already set
+    if (!turndate.value) {
+      turndate.value = eventStartDate.value;
+    }
+
+    // Set default times if not already set
+    if (!turncheckintime.value) {
+      turncheckintime.value = "12:00 PM";
+    }
+
+    if (!turncheckouttime.value) {
+      turncheckouttime.value = "12:00 PM";
+    }
+  }
+};
+
+const toggleHouseDropdown = (e) => {
+  // Don't toggle if in edit mode (has event)
+  if (!props.event) {
+    // Stop propagation to prevent document click from closing the dropdown immediately
+    if (e) e.stopPropagation();
+
+    showHouseDropdown.value = !showHouseDropdown.value;
+
+    // If we're opening the dropdown, add highlight effect via CSS
+    if (showHouseDropdown.value) {
+      const selectHeader = document.querySelector('.custom-select-header');
+      if (selectHeader) {
+        selectHeader.classList.add('highlight-pulse');
+      }
+    }
+  }
+};
+
+const selectHouse = (house, e) => {
+  // Stop propagation to prevent document click handler
+  if (e) e.stopPropagation();
+
+  selectedHouse.value = house;
+  showHouseDropdown.value = false;
 };
 
 // Close dropdown when clicking outside
@@ -435,14 +509,14 @@ onMounted(() => {
 
     // Only proceed if dropdown is open and click is outside the container and not on a house option
     if (
-      formState.showHouseDropdown &&
+      showHouseDropdown.value &&
       container &&
       !container.contains(e.target) &&
       dropdown &&
       !dropdown.contains(e.target) &&
       !e.target.classList.contains('house-option')
     ) {
-      formState.showHouseDropdown = false;
+      showHouseDropdown.value = false;
     }
   };
 
@@ -453,6 +527,75 @@ onMounted(() => {
     document.removeEventListener("click", handleClickOutside);
   });
 });
+
+const saveEvent = () => {
+  // Validate form
+  if (!selectedHouse.value) {
+    houseWarningDialog.value = true;
+    return;
+  }
+
+  // Validate dates
+  if (!eventStartDate.value || !eventEndDate.value) {
+    dateWarningDialog.value = true;
+    return;
+  }
+
+  // Validate turn date is within the event date range
+  if (turn.value && turndate.value) {
+    if (
+      turndate.value < eventStartDate.value ||
+      turndate.value > eventEndDate.value
+    ) {
+      turnDateWarningDialog.value = true;
+      return;
+    }
+  }
+
+  // Create event object
+  const eventData = {
+    title: selectedHouse.value.address,
+    start: `${eventStartDate.value}T00:00:00`,
+    end: `${eventEndDate.value}T23:59:59`,
+    allDay: true,
+    address: selectedHouse.value.address,
+    extendedProps: {
+      color: selectedHouse.value.color || "#2979ff",
+      eventnotes: eventnotes.value || "",
+      turn: turn.value,
+      turndate: turn.value ? turndate.value : null,
+      turncheckintime: turn.value ? turncheckintime.value : null,
+      turncheckouttime: turn.value ? turncheckouttime.value : null,
+    },
+  };
+
+  // Emit the appropriate event based on whether we're editing or creating
+  if (props.event) {
+    emit("update", eventData);
+  } else {
+    emit("create", eventData);
+  }
+
+  closeModal();
+};
+
+const confirmDelete = () => {
+  confirmDeleteDialog.value = true;
+};
+
+const deleteEvent = () => {
+  emit("delete");
+  confirmDeleteDialog.value = false;
+  closeModal();
+};
+
+const openCheckInDialog = () => {
+  checkInTimeDialog.value = true;
+};
+
+const openCheckOutDialog = () => {
+  checkOutTimeDialog.value = true;
+};
 
 // Generate a colored dot for house selection
 const getHouseColorDot = (item) => {
@@ -893,7 +1036,6 @@ const getHouseColorDot = (item) => {
 /* For Firefox */
 .date-field :deep(input[type="date"]) {
   -moz-appearance: textfield;
-  appearance: textfield;
 }
 
 .cursor-pointer {

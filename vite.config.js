@@ -1,30 +1,36 @@
 import { defineConfig } from "vite";
 import vue from "@vitejs/plugin-vue";
-import path from "path";
+
 import vuetify from "vite-plugin-vuetify";
+
 import vueDevTools from 'vite-plugin-vue-devtools'
+import { sourceMapsEnabled } from "process";
 
 // https://vitejs.dev/config/
-export default defineConfig(({ mode }) => ({
+export default defineConfig({
   base: "/",  
   plugins: [
     vue(),
-    vueDevTools(),
+   vueDevTools(),
     vuetify(),
+
   ],
-  resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "src"),
-    },
+    sourceMapsEnabled: {
+    enabled: true,
+    sourceMap: true,
+    sourceMapInlineSources: true,
+    sourceMapInlineSourcesContent: true,
   },
 
-  // Faster development server:
-  server: {
-    hmr: { overlay: false }, // Disable error overlay for cleaner dev experience
+
+      // Faster development server:
+      server: {
+        hmr: { overlay: false }, // Disable error overlay for cleaner dev experience
     host: false, // Expose to network,
     open: true, // Auto-open browser on server start
     fs: {
-      strict: true, // Restrict serving files outside of root directory
+      
+      strict: true,
     },
   },
 
@@ -42,18 +48,15 @@ export default defineConfig(({ mode }) => ({
   // Cache settings for dev mode
   cacheDir: '.vite',
   
-  // Sourcemap generation in dev mode
-  build: {
-    sourcemap: mode === 'development',
-    // Splitting chunks for better cache usage
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          'vue-vendor': ['vue', 'vue-router', 'pinia'],
-          'ui-vendor': ['vuetify']
-        }
-      }
-    }
+  sourceMapsEnabled: {
+    enabled: true,
+    sourceMap: true,
+    sourceMapInlineSources: true,
+    sourceMapInlineSourcesContent: true,
   }
-}))
+
+
+
+
+})
 

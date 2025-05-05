@@ -6,6 +6,7 @@ yarn-debug.log*
 yarn-error.log*
 firebase-debug.log*
 firebase-debug.*.log*
+pnpm-debug.log*
 
 # Firebase cache
 .firebase/
@@ -47,6 +48,11 @@ build/Release
 # Dependency directories
 node_modules/
 
+# Package manager locks (uncomment as needed)
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
+
 # Optional npm cache directory
 .npm
 
@@ -64,16 +70,38 @@ node_modules/
 
 # dotenv environment variables file
 .env
+.env.*
+!.env.example
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/launch.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# Vite & build output
+dist
+dist-ssr
+.vite/
 
 # dataconnect generated files
 .dataconnect
+# SpecStory explanation file
+.specstory/
+.cursor/
 
-#vite
-.vite/**/*
-
-#vite
-.vite/**/*
-
-.vite/deps/
-
-
+# Local temp files
+*.local
+tmp.md
+# SpecStory explanation file
+.specstory/.what-is-this.md

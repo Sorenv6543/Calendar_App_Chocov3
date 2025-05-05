@@ -11,7 +11,7 @@ export function useTimeManagement() {
   const checkInTimeDialog = ref(false);
   const checkOutTimeDialog = ref(false);
   const turncheckintime = ref("");
-  const turncheckouttime = ref("");
+  const turncheckouttime = ref(null);
 
   function validateHourInput(value, fieldName) {
     let numericValue = value.replace(/[^0-9]/g, "");

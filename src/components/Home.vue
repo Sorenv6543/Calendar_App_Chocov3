@@ -1,107 +1,78 @@
 <!--Script---------->
 
-<script setup lang="ts">
-import { onMounted, onBeforeUnmount } from "vue";
-import { useRouter } from "vue-router";
-import { useUserStore } from "../stores/userStore";
-import { useHouseStore } from "../stores/houseStore";
-import { useEventStore } from "../stores/eventStore";
-import { useUIStore } from "../stores/uiStore";
-import FullCalendar from "./FullCalendar";
-import HouseModal from "./HouseModal.vue";
-import EventModal from "./EventModal.vue";
+<script setup>
+
+import { ref, onMounted, onBeforeUnmount } from 'vue';
+import { useRouter } from 'vue-router';
+import { useUserStore } from '../stores/userStore';
+import Sidebar from './Sidebar.vue';
+import FullCalendar from './FullCalendar.vue';
+import HouseModal from './HouseModal.vue';
+import EventModal from './EventModal.vue';
 
 const router = useRouter();
 const userStore = useUserStore();
-const houseStore = useHouseStore();
-const eventStore = useEventStore();
-const uiStore = useUIStore();
+const showSidebar = ref(false);
+const isMobileView = ref(window.innerWidth <= 768);
+const sidebarPersistent = ref(false);
+const showHouseModal = ref(false);
+const showEventModal = ref(false);
+const calendarView = ref('month');
 
-/**
- * Event handlers for child component events
- * 
- * Following the events-up, props-down pattern:
- * - Child components emit events when user interacts with them
- * - Parent handles these events and updates state accordingly via stores
- * - Updated state is passed back down as props
- */
+const toggleSidebar = () => {
+  showSidebar.value = !showSidebar.value;
+};
+
+const toggleSidebarPersistent = () => {
+  sidebarPersistent.value = !sidebarPersistent.value;
+};
+
 const handleAddHouse = () => {
-  uiStore.openHouseModal();
+  showHouseModal.value = true;
+};
+
+const handleCreateEvent = () => {
+  showEventModal.value = true;
 };
 
 // Handle changing calendar view (day, week, month)
-const handleViewChange = (view: string) => {
-  uiStore.setCalendarView(view);
-};
-
-// Handle calendar event modal opening from FullCalendar
-const handleOpenEventModal = (data) => {
-  uiStore.openEventModal({
-    event: data.event,
-    startDate: data.startDate,
-    endDate: data.endDate
-  });
+const handleViewChange = (view) => {
+  calendarView.value = view;
 };
 
 // Handle creating an event from the modal
 const handleEventCreate = async (eventData) => {
   try {
+    // Add user ID to the event data
+    eventData.userId = userStore.userData.id;
+
     // Call the store method to save event to the database
-    const result = await eventStore.createEvent(eventData);
+    const result = await userStore.createEvent(eventData);
 
     // Close the modal first for better perceived performance
-    uiStore.closeEventModal();
+    showEventModal.value = false;
 
     // Return the result in case it's needed
     return result;
   } catch (error) {
     console.error("Error creating event:", error);
+    alert("Failed to create event. Please try again.");
     throw error;
-  }
-};
-
-// Handle event updates from FullCalendar through EventModal
-const handleEventUpdate = async (eventData) => {
-  try {
-    // Update event in Firestore through eventStore
-    await eventStore.updateEvent(eventData);
-    uiStore.closeEventModal();
-  } catch (error) {
-    console.error("Error updating event:", error);
-  }
-};
-
-// Handle event deletion from FullCalendar through EventModal
-const handleEventDelete = async (eventId) => {
-  try {
-    // Delete event in Firestore through eventStore
-    await eventStore.deleteEvent(eventId);
-    uiStore.closeEventModal();
-  } catch (error) {
-    console.error("Error deleting event:", error);
   }
 };
 
 // Handle window resize to detect mobile view
 const handleResize = () => {
-  uiStore.updateViewportSize();
+  isMobileView.value = window.innerWidth <= 768;
 };
 
 onMounted(() => {
-  // Initialize stores
   userStore.initAuthListener();
-  eventStore.subscribeToEvents();
-
-  // Set up window resize listener
-  window.addEventListener("resize", handleResize);
+  window.addEventListener('resize', handleResize);
 });
 
 onBeforeUnmount(() => {
-  // Clean up event subscriptions
-  eventStore.unsubscribeFromEvents();
-
-  // Remove resize listener
-  window.removeEventListener("resize", handleResize);
+  window.removeEventListener('resize', handleResize);
 });
 </script>
 
@@ -110,19 +81,21 @@ onBeforeUnmount(() => {
 <template>
   <div v-if="userStore.userData" class="app-background">
     <div class="home-container">
-      <!-- FullCalendar emits events up to this parent -->
-      <div class="main-content">
-        <FullCalendar :user-id="userStore.userData?.id" :view="uiStore.calendarView"
-          @open-event-modal="handleOpenEventModal" @create-event="handleEventCreate" @update-event="handleEventUpdate"
-          @delete-event="handleEventDelete" />
+      <Sidebar :class="{ 'show': showSidebar, 'mobile-view': isMobileView }" :persistent="sidebarPersistent"
+        @toggle-persistent="toggleSidebarPersistent" @add-house="handleAddHouse" @create-event="handleCreateEvent"
+        @change-view="handleViewChange" />
+
+      <div class="main-content" :class="{ 'sidebar-visible': showSidebar }">
+        <FullCalendar :user-id="userStore.userData.id" :view="calendarView" />
       </div>
 
-      <!-- Modal components managed at parent level -->
-      <HouseModal v-model="uiStore.showHouseModal" @close="uiStore.closeHouseModal()" />
+      <!-- House Modal -->
+      <HouseModal v-model="showHouseModal" @close="showHouseModal = false" />
 
-      <EventModal v-model="uiStore.showEventModal" @close="uiStore.closeEventModal()" @create="handleEventCreate"
-        :houses="houseStore.sortedHouses" :event="uiStore.eventModalData.event"
-        :event-start-date="uiStore.eventModalData.startDate" :event-end-date="uiStore.eventModalData.endDate" />
+      <!-- Event Modal -->
+      <!-- Pass houses to the modal explicitly -->
+      <EventModal v-model="showEventModal" @close="showEventModal = false" @create="handleEventCreate"
+        :houses="userStore.userData?.houses || []" />
     </div>
   </div>
   <div v-else>
@@ -133,6 +106,8 @@ onBeforeUnmount(() => {
 <!--Style----------->
 <style scoped>
 .app-background {
+  background-color: #e0e0e4;
+  /* Even darker background */
   min-height: 100vh;
   width: 100%;
 }
@@ -142,17 +117,21 @@ onBeforeUnmount(() => {
   height: 100vh;
   width: 100%;
   position: relative;
+
+  /* Lower content by 15px */
   background-color: #b7bfd5;
 }
 
 .main-content {
   flex: 1;
   position: relative;
+
   transform: translateX(0);
   transition: transform 0.3s ease;
   will-change: transform;
 }
 
+/* When sidebar is visible, transform main content instead of using margin */
 .main-content.sidebar-visible {
   transform: translateX(310px);
 }
@@ -206,8 +185,7 @@ onBeforeUnmount(() => {
   position: absolute;
   top: 50%;
   left: 50%;
-  margin-top: -25px;
-  margin-left: -25px;
+  transform: translate(-50%, -50%);
 }
 
 @keyframes spin {
